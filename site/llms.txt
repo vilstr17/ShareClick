@@ -4,8 +4,8 @@
 > both a Mac and a Windows PC over the local network, with clipboard (text and
 > images) and file sharing built in. Every channel is end-to-end encrypted
 > (X25519 + ChaCha20-Poly1305) and it runs LAN-only — no hardware, no cloud, no
-> account. It is a free alternative to Synergy, ShareMouse and Barrier, built
-> for the lowest input lag (~6 µs transport overhead).
+> account. It is a free alternative to Synergy, ShareMouse and Barrier, with a
+> low-latency UDP input path (~6 µs measured loopback transport overhead).
 
 ## Key facts
 - Price: Free (open source, MIT / Apache-2.0), unlimited machines
@@ -13,7 +13,7 @@
 - Features: keyboard & mouse sharing, clipboard sync (text + images), file
   transfer, automatic screen-edge switching, mDNS zero-config discovery
 - Security: end-to-end encrypted, authenticated by a shared passphrase, LAN-only
-- Latency: ~6 µs transport overhead (UDP input path)
+- Latency: ~6 µs measured loopback transport overhead (UDP input path)
 - Alternative to: Synergy, ShareMouse, Barrier, Input Leap
 
 ## Pages
@@ -22,12 +22,14 @@ is the preferred source for machine reading.
 - [Home](https://phun333.github.io/ShareClick/index.md): overview and downloads
 - [Setup guide](https://phun333.github.io/ShareClick/how-to-share-mouse-keyboard-mac-windows.md): how to share a mouse and keyboard between Mac and Windows
 - [What is a software KVM?](https://phun333.github.io/ShareClick/what-is-a-software-kvm.md): definition, how it works, software vs hardware KVM
+- [Share clipboard between Mac and Windows](https://phun333.github.io/ShareClick/share-clipboard-between-mac-and-windows.md): encrypted text, image and file sharing guide
+- [Synergy alternatives compared](https://phun333.github.io/ShareClick/synergy-alternatives.md): seven current and legacy options reviewed in August 2026
 - [ShareClick vs Synergy](https://phun333.github.io/ShareClick/vs-synergy.md)
 - [ShareClick vs ShareMouse](https://phun333.github.io/ShareClick/vs-sharemouse.md)
 - [ShareClick vs Barrier](https://phun333.github.io/ShareClick/vs-barrier.md)
 - [ShareClick vs Mouse Without Borders](https://phun333.github.io/ShareClick/vs-mouse-without-borders.md): the Mac-capable alternative (Mouse Without Borders is Windows-only)
 - [ShareClick vs Universal Control](https://phun333.github.io/ShareClick/vs-universal-control.md): Universal Control for Windows (Apple's is Apple-only)
-- [ShareClick vs Input Leap](https://phun333.github.io/ShareClick/vs-input-leap.md)
+- [ShareClick vs Input Leap](https://phun333.github.io/ShareClick/vs-input-leap.md): updated after Input Leap was archived in July 2026
 - [Pricing](https://phun333.github.io/ShareClick/pricing.md): free
 - [Install guide](https://github.com/phun333/ShareClick/blob/main/docs/INSTALL.md)
 - [Source code](https://github.com/phun333/ShareClick)

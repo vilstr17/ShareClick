@@ -47,18 +47,22 @@
     <article>
       <p class="crumb"><a href="./">shareclick</a> / vs Barrier</p>
       <h1>ShareClick vs Barrier</h1>
-      <p class="lead">Barrier was a great open-source KVM, but it is <strong>no longer
-      maintained</strong>. ShareClick is a modern, actively developed successor — encrypted by
-      default, with clipboard images, file transfer and zero-config discovery.</p>
+      <p class="lead">Barrier was a widely used open-source software KVM, but its official release
+      page says it is <strong>no longer maintained</strong> and no longer receives improvements or
+      security fixes. ShareClick is a separate, actively developed alternative for encrypted
+      Mac-to-Windows input, clipboard and file sharing.</p>
+      <p class="updated">Status checked against the
+      <a href="https://github.com/debauchee/barrier/releases">official Barrier release page</a> on
+      <time datetime="2026-08-22">August 22, 2026</time>.</p>
 
       <table class="cmp">
         <colgroup><col class="c1"><col><col></colgroup>
         <thead><tr><th>Feature</th><th>ShareClick</th><th>Barrier</th></tr></thead>
         <tbody>
           <tr><td>Price</td><td class="yes">Free &amp; open source</td><td class="yes">Free &amp; open source</td></tr>
-          <tr><td>Actively maintained</td><td class="win">Yes</td><td>No (archived)</td></tr>
-          <tr><td>Encryption</td><td class="win">On by default (X25519 + ChaCha20)</td><td>Optional SSL (manual setup)</td></tr>
-          <tr><td>Clipboard images</td><td class="yes">Yes</td><td>Text mainly</td></tr>
+          <tr><td>Project status</td><td class="win">Active, pre-release</td><td>Unmaintained</td></tr>
+          <tr><td>Encryption</td><td class="win">On by default (X25519 + ChaCha20)</td><td>SSL support</td></tr>
+          <tr><td>Clipboard</td><td class="yes">Text + images</td><td class="yes">Supported</td></tr>
           <tr><td>File transfer</td><td class="win">Yes</td><td>No</td></tr>
           <tr><td>Auto discovery</td><td class="win">mDNS (no IPs)</td><td>Manual IP setup</td></tr>
           <tr><td>Input transport</td><td class="win">UDP, ~6&nbsp;µs</td><td>TCP</td></tr>
@@ -66,15 +70,41 @@
         </tbody>
       </table>
 
+      <h2>why maintenance status matters</h2>
+      <p>A software KVM captures keyboard and mouse input and may read sensitive clipboard content.
+      An unmaintained build can continue working, but users should not expect compatibility fixes for
+      new macOS or Windows releases or patches for newly reported security issues. Barrier's own
+      release page directs users toward Input Leap; the Input Leap repository was later archived in
+      July 2026.</p>
+      <p>Existing Barrier users do not need to panic or uninstall a working setup immediately. For a
+      new installation, however, maintenance status should be part of the decision alongside
+      platform support and features.</p>
+
+      <h2>feature and architecture differences</h2>
+      <p>Barrier follows the classic Synergy client/server model and supports macOS, Windows and
+      Linux. ShareClick currently focuses on macOS and Windows and is still pre-release. ShareClick
+      separates low-latency UDP input from reliable clipboard and file traffic, encrypts both
+      channels and uses mDNS for discovery.</p>
+      <p>Barrier remains broader for older Linux setups. ShareClick adds clipboard images and a
+      dedicated file-transfer path, but it does not yet replace Barrier for users who require Linux.
+      Deskflow is another maintained open-source option worth evaluating for that use case.</p>
+
       <h2>the short version</h2>
       <div class="verdict">
-        <p><b>Barrier is unmaintained</b> — most users are migrating away. <b>ShareClick</b> gives
-        you the same "one keyboard &amp; mouse" idea, but actively developed, encrypted by default,
-        with file transfer, clipboard images, and mDNS discovery so you never type an IP.</p>
+        <p><b>Barrier is unmaintained.</b> ShareClick provides the same basic one-keyboard-and-mouse
+        workflow for Mac and Windows, with active development, encryption on every channel, file
+        transfer, clipboard images and mDNS discovery.</p>
       </div>
 
-      <p>If you liked Barrier (or Input Leap, its fork) and want something current and secure for
-      Mac↔Windows, ShareClick is a drop-in reason to switch.</p>
+      <h2>moving from Barrier to ShareClick</h2>
+      <p>ShareClick cannot import a Barrier configuration because the applications use different
+      protocols and layout formats. Install ShareClick on both computers, pair them and recreate the
+      physical screen arrangement. Approve macOS Accessibility and Input Monitoring and allow the
+      Windows firewall rule before testing keyboard, clipboard and file transfer.</p>
+      <p>Keep Barrier installed until the new setup works with your keyboard layout and monitor
+      arrangement. If Linux is part of the desk, compare Deskflow and Lan Mouse before choosing a
+      replacement. The broader <a href="synergy-alternatives.html">Synergy alternatives guide</a>
+      covers those options.</p>
 
       <div class="cta-inline">
         <a class="btn" href="https://github.com/phun333/ShareClick/releases" data-umami-event="release-page-click" data-umami-event-placement="vs-barrier">Download ShareClick — free</a>

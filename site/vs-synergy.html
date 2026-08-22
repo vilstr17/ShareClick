@@ -48,8 +48,11 @@
       <p class="crumb"><a href="./">shareclick</a> / vs Synergy</p>
       <h1>ShareClick vs Synergy</h1>
       <p class="lead">Looking for a <strong>free, open-source Synergy alternative</strong>? ShareClick
-      shares one keyboard, mouse, clipboard and files between your Mac and Windows PC — with no
-      license, encrypted by default, and built for the lowest input lag.</p>
+      shares one keyboard, mouse, clipboard and files between your Mac and Windows PC with no
+      license, encryption on every channel and a transport designed for low input latency.</p>
+      <p class="updated">Compared against the
+      <a href="https://symless.com/synergy">official Synergy product and support pages</a> on
+      <time datetime="2026-08-22">August 22, 2026</time>.</p>
 
       <table class="cmp">
         <colgroup><col class="c1"><col><col></colgroup>
@@ -68,17 +71,61 @@
         </tbody>
       </table>
 
+      <h2>pricing and licensing</h2>
+      <p>ShareClick is released under MIT or Apache-2.0 and does not require a license key. Synergy
+      is a commercial product with active license requirements; the number of computers and support
+      options depend on the purchased edition. Symless changed parts of its licensing policy in
+      2026, so buyers should use the current official license and pricing pages rather than an old
+      third-party comparison.</p>
+      <p>The practical decision is not simply free versus paid. A Synergy license funds a mature
+      commercial product and support organization. ShareClick provides source access and no usage
+      fee, but support is community-based and the project is still pre-release.</p>
+
+      <h2>platform support and setup</h2>
+      <p>Synergy supports Windows, macOS and Linux and has a long production history. ShareClick
+      currently focuses on macOS and Windows. Both products install an application on every
+      computer and switch control when the pointer reaches a configured screen edge. ShareClick uses
+      mDNS discovery and exchanges the monitor arrangement between paired devices; Synergy 3 also
+      advertises automatic configuration and discovery.</p>
+      <p>Choose Synergy when Linux, older deployment experience or paid support is mandatory. Choose
+      ShareClick when the desk is specifically Mac plus Windows and open-source licensing is a core
+      requirement.</p>
+
+      <h2>clipboard, files and security</h2>
+      <p>Both products cover the main software KVM workflow: keyboard and mouse control, clipboard
+      sharing and file movement. ShareClick synchronizes text and images and sends files over a
+      separate reliable channel. Its pairing uses X25519 key exchange with ChaCha20-Poly1305 on both
+      input and bulk traffic. Synergy uses TLS for encrypted network communication.</p>
+      <p>Neither product shares the display itself. Each computer keeps using its own monitor. If
+      you need BIOS access or need several computers to share one physical monitor, use a hardware
+      KVM instead.</p>
+
+      <h2>what the latency number means</h2>
+      <p>ShareClick's approximately 6&nbsp;µs figure is measured transport overhead on a local
+      loopback benchmark. It is not a full Mac-to-Windows latency measurement and is not a direct
+      benchmark against Synergy. Real input latency also includes capture, network, scheduling,
+      display refresh and input injection. The architectural difference is factual: ShareClick uses
+      a dedicated UDP input path while reliable clipboard and file traffic stays separate.</p>
+
       <h2>which should you pick?</h2>
       <div class="verdict">
         <p><b>Choose ShareClick</b> if you want it <b>free and open source</b>, encrypted by default,
-        with the lowest input lag and no license to manage.</p>
+        with a dedicated low-latency input path and no license to manage.</p>
         <p><b>Choose Synergy</b> if you need first-class <b>Linux</b> support and paid commercial
         support, and don't mind the license fee.</p>
       </div>
 
-      <p>Synergy is a mature, respected product — its open core (Deskflow) is excellent. ShareClick
-      is the newer, free-and-open option focused on Mac↔Windows with a UDP input path (~6&nbsp;µs
-      transport overhead), encryption on every channel, and zero-config mDNS discovery.</p>
+      <p>Synergy is the mature commercial option with broad platform support. Deskflow carries the
+      open-source continuation of the Synergy 1 codebase. ShareClick is a separate, newer
+      implementation focused on a free and encrypted Mac-to-Windows workflow.</p>
+
+      <h2>moving from Synergy to ShareClick</h2>
+      <p>There is no configuration import because the projects use different formats and protocols.
+      Install ShareClick on both computers, pair them, arrange the displays and confirm macOS
+      permissions and the Windows firewall rule. Keep Synergy installed until the new setup has
+      passed normal keyboard, clipboard and file-transfer tests.</p>
+      <p>See the <a href="how-to-share-mouse-keyboard-mac-windows.html">three-minute setup guide</a>
+      or compare the broader list of <a href="synergy-alternatives.html">Synergy alternatives</a>.</p>
 
       <div class="cta-inline">
         <a class="btn" href="https://github.com/phun333/ShareClick/releases" data-umami-event="release-page-click" data-umami-event-placement="vs-synergy">Download ShareClick — free</a>

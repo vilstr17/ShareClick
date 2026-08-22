@@ -1,14 +1,18 @@
-# ShareClick — full content for LLMs
+# ShareClick — full website content
 
-> This file (llms-full.txt) is the complete text of the ShareClick website in one
-> place, so AI models and answer engines can ingest everything in a single fetch.
-> ShareClick is a free, open-source software KVM: one keyboard and mouse control
-> both a Mac and a Windows PC over the LAN, with encrypted clipboard and file
-> sharing. Free alternative to Synergy, ShareMouse, Barrier, Input Leap, Mouse
-> Without Borders, and the cross-platform answer to Apple Universal Control.
-> Source: https://github.com/phun333/ShareClick
+> This file contains the complete text of the ShareClick marketing site in one
+> place for machine reading. ShareClick is a free, open-source software KVM: one
+> keyboard and mouse control a Mac and a Windows PC over the LAN, with encrypted
+> clipboard and file sharing. The product requires no ShareClick account or cloud
+> service. Source: https://github.com/phun333/ShareClick
+
+> Updated: August 22, 2026. The ~6 µs latency figure used below is measured
+> loopback transport overhead, not full end-to-end device latency or a direct
+> competitor benchmark.
 
 ---
+
+Source page: https://phun333.github.io/ShareClick/index.md
 
 # ShareClick — share one keyboard & mouse across Mac and Windows
 
@@ -20,7 +24,7 @@ control both a Mac and a Windows PC over your local network, with clipboard (tex
 and images) and file sharing built in. Every channel is end-to-end encrypted
 (X25519 key exchange + ChaCha20-Poly1305) and it runs LAN-only — no hardware, no
 cloud, no account. It is a free alternative to Synergy, ShareMouse, Barrier and
-Input Leap, built for the lowest input lag (~6 µs transport overhead).
+Input Leap, with a low-latency UDP input path (~6 µs measured loopback transport overhead).
 
 - **Price:** Free — open source (MIT / Apache-2.0), unlimited machines
 - **Platforms:** macOS and Windows
@@ -35,7 +39,7 @@ Input Leap, built for the lowest input lag (~6 µs transport overhead).
 - End-to-end encryption (X25519 + ChaCha20-Poly1305), authenticated by a shared passphrase
 - Automatic screen-edge switching — push the cursor to the border to switch machines (plus a hotkey)
 - mDNS zero-config discovery — no IP addresses to type
-- Lowest input lag: ~6 µs transport overhead on a UDP input path
+- Low-latency input design: ~6 µs measured loopback transport overhead on a UDP path
 
 ## FAQ
 
@@ -74,11 +78,226 @@ shared passphrase.
 - [ShareClick vs Synergy](https://phun333.github.io/ShareClick/vs-synergy.md)
 - [ShareClick vs ShareMouse](https://phun333.github.io/ShareClick/vs-sharemouse.md)
 - [ShareClick vs Barrier](https://phun333.github.io/ShareClick/vs-barrier.md)
+- [Synergy alternatives compared](https://phun333.github.io/ShareClick/synergy-alternatives.md)
+- [Share clipboard between Mac and Windows](https://phun333.github.io/ShareClick/share-clipboard-between-mac-and-windows.md)
 - [Pricing](https://phun333.github.io/ShareClick/pricing.md)
 - [Install help](https://github.com/phun333/ShareClick/blob/main/docs/INSTALL.md)
 
+---
+
+Source page: https://phun333.github.io/ShareClick/how-to-share-mouse-keyboard-mac-windows.md
+
+# How to share a mouse & keyboard between Mac and Windows
+
+> Step-by-step guide to share one mouse, keyboard, clipboard and files between a
+> Mac and a Windows PC for free with ShareClick, an open-source software KVM.
+
+You can control both your Mac and your Windows PC with a single keyboard and
+mouse — for free, no KVM hardware, no cloud. Here's how with **ShareClick**, an
+open-source software KVM. It takes about three minutes.
+
+## 1. Install on both machines
+
+Download **ShareClick** from the [releases page](https://github.com/phun333/ShareClick/releases):
+the **.dmg** on your Mac and the **.exe** on your Windows PC. Both launch to the
+menu bar (macOS) / system tray (Windows). First launch blocked? See the
+[install help](https://github.com/phun333/ShareClick/blob/main/docs/INSTALL.md).
+
+## 2. Set one shared passphrase & layout
+
+Open **Settings & Monitor Manager** on both machines. Enter the **same
+passphrase** (it authenticates and encrypts the connection), then say which
+machine sits on which screen edge — e.g. the PC is to the right of the Mac.
+
+## 3. Grant permissions
+
+- **macOS:** System Settings → Privacy & Security → enable **Accessibility** and **Input Monitoring** for ShareClick.
+- **Windows:** allow ShareClick through the firewall when prompted.
+
+Both machines must be on the same Wi-Fi / LAN.
+
+## 4. Just move your mouse
+
+Slide the cursor into the shared screen edge — your keyboard and mouse now drive
+the other computer. Push back to return. Copy on one machine and paste on the
+other; the **clipboard syncs automatically**, and you can send files too.
+
+## What ShareClick shares
+
+| Capability | Behavior |
+|---|---|
+| Mouse and keyboard | Control crosses when the pointer reaches the configured screen edge |
+| Clipboard text | Copy and paste in both directions |
+| Clipboard images | Synchronized between macOS and Windows |
+| Files | Transferred over the encrypted reliable channel |
+| Video/display | Not shared; each computer continues using its own monitor |
+
+If clipboard sharing is your main requirement, see the dedicated guide to
+[sharing a clipboard between Mac and Windows](https://phun333.github.io/ShareClick/share-clipboard-between-mac-and-windows.md).
+
+## Common setup problems
+
+### The computers cannot find each other
+
+Confirm that both computers are on the same local network. Guest Wi-Fi often
+blocks devices from reaching each other. On Windows, check that the firewall
+rule allows ShareClick. Wired Ethernet also works and can make network
+troubleshooting simpler.
+
+### The Mac does not accept remote input
+
+Reopen System Settings, check Accessibility and Input Monitoring, then restart
+ShareClick. macOS permissions are attached to the installed application, so
+moving or replacing the app can require approval again.
+
+### The cursor crosses on the wrong side
+
+Open the monitor arrangement and place the Mac and Windows display in the same
+physical order as the desk. The shared edge in the layout determines where the
+pointer leaves and where it appears.
+
+### Clipboard or files do not arrive
+
+First confirm that mouse control is connected. Test clipboard sync with a short
+line of plain text before trying an image or application-specific format.
+Clipboard changes made while disconnected are not queued for later delivery.
+
+## Software KVM or hardware KVM?
+
+ShareClick is a [software KVM](https://phun333.github.io/ShareClick/what-is-a-software-kvm.md):
+it shares input over the LAN while every computer keeps its own display. A
+hardware KVM physically switches a keyboard, mouse and monitor between
+computers. Use hardware when one monitor must display several machines or when
+you need BIOS-level control. Use software when both screens stay visible and you
+want seamless pointer, clipboard and file movement.
+
+That's it. One keyboard, one mouse, one clipboard across your Mac and Windows PC —
+**encrypted, low-latency, and free**.
+
+- [Download ShareClick (free)](https://github.com/phun333/ShareClick/releases)
+- [Synergy alternatives compared](https://phun333.github.io/ShareClick/synergy-alternatives.md)
+- [Back to home](https://phun333.github.io/ShareClick/index.md)
 
 ---
+
+Source page: https://phun333.github.io/ShareClick/share-clipboard-between-mac-and-windows.md
+
+# How to share clipboard between Mac and Windows
+
+To share a clipboard between a **Mac and Windows PC**, install ShareClick on both
+computers and pair them on the same local network. Copy text or an image on
+either machine and paste it on the other. The transfer stays on your LAN and is
+encrypted end to end.
+
+- **Price:** Free and open source (MIT / Apache-2.0)
+- **Platforms:** macOS and Windows
+- **Internet required:** No; the computers communicate over the local network
+- **Supported clipboard content:** Text and images
+- **Files:** Sent through a separate encrypted file-transfer channel
+- **Download:** https://github.com/phun333/ShareClick/releases
+
+## The quickest method
+
+macOS Universal Clipboard does not support Windows, and Windows clipboard sync
+is designed around Windows devices. A cross-platform app fills that gap.
+ShareClick combines clipboard sync with mouse and keyboard sharing, so the two
+computers behave like one desk rather than two separate systems.
+
+1. Download ShareClick for macOS and Windows from the official releases page.
+2. Install and start it on both computers connected to the same Wi-Fi or Ethernet LAN.
+3. Pair the computers and confirm the same encrypted connection.
+4. Copy text or an image normally, switch to the other computer, and paste.
+
+No browser tab, cloud drive or message to yourself is required. Clipboard
+monitoring runs in the background while ShareClick is connected.
+
+## What can be copied?
+
+| Content | How ShareClick handles it |
+|---|---|
+| Plain text | Automatic clipboard sync in both directions |
+| Images | Raw image clipboard data is synchronized |
+| Files | Sent through the separate encrypted file-transfer channel |
+| Passwords and sensitive text | Transferred if copied while connected; treat the paired computer as trusted |
+
+Clipboard formats differ between operating systems, so rich
+application-specific formatting may not always survive a cross-platform paste.
+Plain text and images are the most portable formats. Files use ShareClick's
+file-transfer feature instead of pretending to be clipboard text.
+
+## How clipboard security works
+
+Clipboard contents can include passwords, tokens and private notes, so transport
+security matters. ShareClick keeps traffic on the local network. Pairing uses an
+authenticated shared secret, while X25519 key exchange and
+ChaCha20-Poly1305 protect both the clipboard and file channels. There is no
+ShareClick account and clipboard data is not stored in a ShareClick cloud
+service.
+
+Only pair computers you control. Clear the clipboard after copying a sensitive
+value, and disconnect ShareClick on networks or machines you do not trust.
+
+## Troubleshooting clipboard sync
+
+### Both computers must be connected
+
+Confirm that ShareClick reports a live connection on both machines. Clipboard
+changes made while disconnected cannot be delivered retroactively.
+
+### Check local network and firewall access
+
+Both machines need to reach each other on the same LAN. On Windows, allow
+ShareClick through the firewall. Guest Wi-Fi networks often isolate devices and
+prevent local discovery.
+
+### Grant macOS permissions
+
+Open macOS System Settings and confirm that ShareClick has the permissions
+requested during setup. Restart the app after changing a permission.
+
+### Try plain text first
+
+Copy a short line from a basic text editor. If that works but content from one
+specific app does not, the source app may use a private clipboard format.
+Pasting as plain text is the most reliable cross-platform test.
+
+## Clipboard sharing vs cloud sync
+
+Emailing text to yourself or placing a file in cloud storage can work, but those
+methods add an account, internet dependency and extra steps. A LAN clipboard
+tool is intended for two computers on the same desk: copy, cross the screen edge,
+and paste immediately. Cloud storage remains useful when the machines are not on
+the same network or when you need long-term file history.
+
+## Frequently asked questions
+
+**Can I share a clipboard between Mac and Windows?**
+Yes. Install a cross-platform clipboard tool such as ShareClick on both
+computers. It can copy text and images between macOS and Windows over the local
+network.
+
+**Does ShareClick use the cloud for clipboard sync?**
+No. ShareClick sends clipboard data directly between the paired computers over
+the local network. The connection is authenticated and end-to-end encrypted.
+
+**Can I copy files between Mac and Windows too?**
+Yes. ShareClick includes file transfer over its encrypted reliable channel.
+Clipboard sync handles text and images, while file transfer handles files.
+
+**Does Apple Universal Clipboard work with Windows?**
+No. Apple Universal Clipboard works between supported Apple devices signed into
+the same Apple Account. A separate cross-platform tool is needed for
+Mac-to-Windows clipboard sharing.
+
+## Related guides
+
+- [Share one mouse and keyboard between Mac and Windows](https://phun333.github.io/ShareClick/how-to-share-mouse-keyboard-mac-windows.md)
+- [What is a software KVM?](https://phun333.github.io/ShareClick/what-is-a-software-kvm.md)
+- [Synergy alternatives compared](https://phun333.github.io/ShareClick/synergy-alternatives.md)
+
+---
+
+Source page: https://phun333.github.io/ShareClick/what-is-a-software-kvm.md
 
 # What is a software KVM?
 
@@ -123,70 +342,201 @@ your local network, while each computer keeps using its own display.
 Yes. **ShareClick** is a free, open-source software KVM that shares one keyboard,
 mouse, clipboard and files between a **Mac and a Windows PC** over the local
 network. Every channel is end-to-end encrypted (X25519 + ChaCha20-Poly1305), it
-runs LAN-only (no cloud), and it's built for the lowest input lag (~6 µs transport
-overhead). It's a free alternative to Synergy, ShareMouse, Barrier and Input Leap.
+runs LAN-only (no cloud), and uses a low-latency UDP input path (~6 µs measured
+loopback transport overhead). It's a free alternative to Synergy, ShareMouse, Barrier and Input Leap.
 
 In short: a software KVM turns two computers on your desk into one seamless
 workspace — one keyboard, one mouse, one clipboard — without any extra hardware.
 
 - [Download ShareClick (free)](https://github.com/phun333/ShareClick/releases)
 - [Setup guide](https://phun333.github.io/ShareClick/how-to-share-mouse-keyboard-mac-windows.md)
+- [Synergy alternatives compared](https://phun333.github.io/ShareClick/synergy-alternatives.md)
 
+---
+
+Source page: https://phun333.github.io/ShareClick/synergy-alternatives.md
+
+# 7 Synergy alternatives compared for 2026
+
+The right **Synergy alternative** depends on your operating systems and whether
+you need clipboard sync, file transfer, Linux support or a commercial support
+contract. This comparison covers seven current and legacy options without
+pretending that one tool is best for every desk.
+
+Reviewed against official product pages and repositories on **August 22, 2026**.
+
+## Quick comparison
+
+| Tool | Platforms | Clipboard | Files | Status | Best fit |
+|---|---|---|---|---|---|
+| [ShareClick](https://phun333.github.io/ShareClick/) | macOS, Windows | Text + images | Yes | Active, pre-release | Free encrypted Mac + Windows setup |
+| [Deskflow](https://github.com/deskflow/deskflow) | macOS, Windows, Linux, BSD | Yes | Limited | Active | Mature open-source cross-platform use |
+| [ShareMouse](https://www.sharemouse.com/) | macOS, Windows | Yes | Drag and drop | Commercial | Polished paid Mac + Windows workflow |
+| [Mouse Without Borders](https://learn.microsoft.com/windows/powertoys/mouse-without-borders) | Windows | Yes | Yes | Active in PowerToys | Windows-only desks |
+| [Lan Mouse](https://github.com/feschber/lan-mouse) | macOS, Windows, Linux | No | No | Active | Input sharing, especially Linux |
+| [Input Leap](https://github.com/input-leap/input-leap) | macOS, Windows, Linux, BSD | Yes; Wayland gap | No | Archived July 2026 | Existing installations |
+| [Barrier](https://github.com/debauchee/barrier) | macOS, Windows, Linux | Yes | No | Unmaintained | Legacy installations only |
+
+## How to choose a Synergy alternative
+
+Start with platform support. A Windows-only utility is a strong option for four
+Windows PCs but irrelevant to a Mac-and-Windows desk. Then decide whether you
+only need keyboard and mouse input or also expect clipboard images and file
+transfer. Finally, check maintenance, encryption defaults and whether you need
+paid support.
+
+- **Mac + Windows, free and open source:** ShareClick or Deskflow.
+- **Mac + Windows, polished commercial product:** ShareMouse or Synergy.
+- **Windows only:** Mouse Without Borders in Microsoft PowerToys.
+- **Linux is essential:** Deskflow or Lan Mouse.
+- **Existing Barrier or Input Leap user:** Keep archive status and security maintenance in mind before starting a new deployment.
+
+## 1. ShareClick
+
+**ShareClick** is a free, open-source software KVM focused on sharing a mouse,
+keyboard, clipboard and files between macOS and Windows. Input uses a low-latency
+UDP path; clipboard and files use a reliable channel. Both channels are
+end-to-end encrypted, and mDNS discovery avoids manual IP entry.
+
+The trade-off is maturity and platform breadth. ShareClick is currently
+pre-release and does not yet offer production Linux support or commercial
+support. It fits developers and power users who want an inspectable, LAN-only
+Mac-to-Windows tool and are comfortable testing an actively developed
+open-source project.
+
+## 2. Deskflow
+
+[Deskflow](https://github.com/deskflow/deskflow) is the mature open-source
+continuation of the original Synergy 1 codebase. It shares keyboard, mouse and
+clipboard across Windows, macOS, Linux and BSD, with TLS enabled by default. Its
+platform coverage and established codebase make it the safer open-source choice
+when Linux support is required.
+
+Choose Deskflow when broad operating-system support matters more than
+ShareClick's focused Mac-to-Windows file-transfer and low-latency design. As with
+any cross-platform input tool, verify packaging and Wayland support for the Linux
+distribution you actually use.
+
+## 3. ShareMouse
+
+[ShareMouse](https://www.sharemouse.com/) is a commercial Mac-and-Windows product
+with bidirectional control, clipboard sharing and polished file drag and drop.
+Its official feature list includes display management, synchronization features
+and remote login capabilities that go beyond a minimal software KVM.
+
+A restricted freeware mode exists, while professional use, larger display
+arrangements and advanced features require a paid edition under ShareMouse's
+current policy. Choose ShareMouse when polish and commercial product support
+justify the license. Choose an open-source option when licensing cost, source
+access or unrestricted personal layouts matter more.
+
+## 4. Mouse Without Borders
+
+[Mouse Without Borders](https://learn.microsoft.com/windows/powertoys/mouse-without-borders)
+is part of Microsoft PowerToys. It controls up to four Windows computers with
+one keyboard and mouse and supports clipboard sharing and file transfer. For a
+Windows-only desk, it is free, familiar and backed by the PowerToys project.
+
+It does not solve Mac-to-Windows input sharing. If even one computer is a Mac,
+use a cross-platform tool instead. That platform boundary is the main decision,
+not a small feature difference.
+
+## 5. Lan Mouse
+
+[Lan Mouse](https://github.com/feschber/lan-mouse) is an open-source Rust project
+focused on mouse and keyboard sharing across Linux, Windows and macOS. It is
+particularly relevant to Linux and Wayland users who want a small input-sharing
+tool.
+
+Lan Mouse intentionally does not provide the broader clipboard and file workflow
+offered by full software KVM suites. Choose it when input sharing is the
+requirement. Choose ShareClick, Deskflow, ShareMouse or Mouse Without Borders
+when clipboard transfer is part of the job.
+
+## 6. Input Leap
+
+[Input Leap](https://github.com/input-leap/input-leap) was created by active
+Barrier maintainers and supported Windows, macOS, Linux and BSD. Its feature set
+centers on keyboard, mouse and clipboard sharing. The repository was archived on
+July 26, 2026, and is now read-only.
+
+That does not make existing installations stop working, but archive status
+matters for new deployments: fixes, security maintenance and future
+operating-system compatibility are no longer expected from that repository.
+Existing users should monitor successor projects and migration options.
+
+## 7. Barrier
+
+[Barrier](https://github.com/debauchee/barrier) was a widely used free Synergy
+fork. Its official release page now states that Barrier is no longer maintained
+and no longer receives improvements or security fixes. The project directed
+users toward Input Leap, which has since also been archived.
+
+Barrier remains useful context because many older tutorials recommend it. For a
+new setup, select a maintained project instead. Software that captures keyboard
+input and clipboard data should not be treated like an unchanging utility.
+
+## Bottom line
+
+- **Choose ShareClick** for a free, encrypted Mac + Windows setup with clipboard images and file transfer, if pre-release software is acceptable.
+- **Choose Deskflow** for a mature open-source tool with Linux support.
+- **Choose ShareMouse or Synergy** when a commercial product and support are priorities.
+- **Choose Mouse Without Borders** when every computer runs Windows.
+
+## Frequently asked questions
+
+### What is a free Synergy alternative for Mac and Windows?
+
+ShareClick is a free, open-source option focused on Mac and Windows. Deskflow is
+another mature open-source choice and also supports Linux.
+
+### Which Synergy alternative supports Linux?
+
+Deskflow and Lan Mouse support Linux. Input Leap also has Linux builds, but its
+repository was archived in July 2026. ShareClick currently focuses on macOS and
+Windows.
+
+### Is Barrier still maintained?
+
+No. Barrier's official release page says the project is no longer maintained and
+no longer receives improvements or security fixes.
+
+### Does Mouse Without Borders work on macOS?
+
+No. Microsoft Mouse Without Borders is for Windows computers. Mac-to-Windows
+setups need a cross-platform option such as ShareClick, Deskflow, ShareMouse or
+Synergy.
+
+## Sources and update policy
+
+This comparison uses the official project repositories, Microsoft documentation
+and vendor feature and licensing pages linked above. Product status and pricing
+can change. The page records its review date so readers can judge freshness;
+claims should be checked again before a purchase or large deployment.
+
+## Related pages
+
+- [ShareClick vs Synergy](https://phun333.github.io/ShareClick/vs-synergy.md)
+- [ShareClick vs ShareMouse](https://phun333.github.io/ShareClick/vs-sharemouse.md)
+- [ShareClick vs Barrier](https://phun333.github.io/ShareClick/vs-barrier.md)
+- [Share clipboard between Mac and Windows](https://phun333.github.io/ShareClick/share-clipboard-between-mac-and-windows.md)
 
 ---
 
-# How to share a mouse & keyboard between Mac and Windows
-
-> Step-by-step guide to share one mouse, keyboard, clipboard and files between a
-> Mac and a Windows PC for free with ShareClick, an open-source software KVM.
-
-You can control both your Mac and your Windows PC with a single keyboard and
-mouse — for free, no KVM hardware, no cloud. Here's how with **ShareClick**, an
-open-source software KVM. It takes about three minutes.
-
-## 1. Install on both machines
-
-Download **ShareClick** from the [releases page](https://github.com/phun333/ShareClick/releases):
-the **.dmg** on your Mac and the **.exe** on your Windows PC. Both launch to the
-menu bar (macOS) / system tray (Windows). First launch blocked? See the
-[install help](https://github.com/phun333/ShareClick/blob/main/docs/INSTALL.md).
-
-## 2. Set one shared passphrase & layout
-
-Open **Settings & Monitor Manager** on both machines. Enter the **same
-passphrase** (it authenticates and encrypts the connection), then say which
-machine sits on which screen edge — e.g. the PC is to the right of the Mac.
-
-## 3. Grant permissions
-
-- **macOS:** System Settings → Privacy & Security → enable **Accessibility** and **Input Monitoring** for ShareClick.
-- **Windows:** allow ShareClick through the firewall when prompted.
-
-Both machines must be on the same Wi-Fi / LAN.
-
-## 4. Just move your mouse
-
-Slide the cursor into the shared screen edge — your keyboard and mouse now drive
-the other computer. Push back to return. Copy on one machine and paste on the
-other; the **clipboard syncs automatically**, and you can send files too.
-
-That's it. One keyboard, one mouse, one clipboard across your Mac and Windows PC —
-**encrypted, low-latency, and free**.
-
-- [Download ShareClick (free)](https://github.com/phun333/ShareClick/releases)
-- [Back to home](https://phun333.github.io/ShareClick/index.md)
-
-
----
+Source page: https://phun333.github.io/ShareClick/vs-synergy.md
 
 # ShareClick vs Synergy
 
 > A free, open-source Synergy alternative to share mouse, keyboard, clipboard and
-> files between Mac and Windows. Encrypted, low-latency.
+> files between Mac and Windows. Encrypted and designed for low input latency.
 
 Looking for a **free, open-source Synergy alternative**? ShareClick shares one
-keyboard, mouse, clipboard and files between your Mac and Windows PC — with no
-license, encrypted by default, and built for the lowest input lag.
+keyboard, mouse, clipboard and files between your Mac and Windows PC with no
+license, encryption on every channel and a transport designed for low input
+latency.
+
+Compared against the [official Synergy product and support pages](https://symless.com/synergy)
+on **August 22, 2026**.
 
 | Feature | ShareClick | Synergy |
 | --- | --- | --- |
@@ -201,36 +551,97 @@ license, encrypted by default, and built for the lowest input lag.
 | Input latency focus | **~6 µs transport (UDP)** | Good |
 | Support | Community / GitHub | Commercial support |
 
+## Pricing and licensing
+
+ShareClick is released under MIT or Apache-2.0 and does not require a license
+key. Synergy is a commercial product with active license requirements; the
+number of computers and support options depend on the purchased edition.
+Symless changed parts of its licensing policy in 2026, so buyers should use the
+current official license and pricing pages rather than an old third-party
+comparison.
+
+The practical decision is not simply free versus paid. A Synergy license funds a
+mature commercial product and support organization. ShareClick provides source
+access and no usage fee, but support is community-based and the project is still
+pre-release.
+
+## Platform support and setup
+
+Synergy supports Windows, macOS and Linux and has a long production history.
+ShareClick currently focuses on macOS and Windows. Both products install an
+application on every computer and switch control when the pointer reaches a
+configured screen edge. ShareClick uses mDNS discovery and exchanges the monitor
+arrangement between paired devices; Synergy 3 also advertises automatic
+configuration and discovery.
+
+Choose Synergy when Linux, older deployment experience or paid support is
+mandatory. Choose ShareClick when the desk is specifically Mac plus Windows and
+open-source licensing is a core requirement.
+
+## Clipboard, files and security
+
+Both products cover the main software KVM workflow: keyboard and mouse control,
+clipboard sharing and file movement. ShareClick synchronizes text and images and
+sends files over a separate reliable channel. Its pairing uses X25519 key
+exchange with ChaCha20-Poly1305 on both input and bulk traffic. Synergy uses TLS
+for encrypted network communication.
+
+Neither product shares the display itself. Each computer keeps using its own
+monitor. If you need BIOS access or need several computers to share one physical
+monitor, use a hardware KVM instead.
+
+## What the latency number means
+
+ShareClick's approximately 6 µs figure is measured transport overhead on a local
+loopback benchmark. It is not a full Mac-to-Windows latency measurement and is
+not a direct benchmark against Synergy. Real input latency also includes capture,
+network, scheduling, display refresh and input injection. The architectural
+difference is factual: ShareClick uses a dedicated UDP input path while reliable
+clipboard and file traffic stays separate.
+
 ## Which should you pick?
 
 - **Choose ShareClick** if you want it **free and open source**, encrypted by
-  default, with the lowest input lag and no license to manage.
+  default, with no license to manage.
 - **Choose Synergy** if you need first-class **Linux** support and paid
-  commercial support, and don't mind the license fee.
+  commercial support, and do not mind the license fee.
 
-Synergy is a mature, respected product — its open core (Deskflow) is excellent.
-ShareClick is the newer, free-and-open option focused on Mac↔Windows with a UDP
-input path (~6 µs transport overhead), encryption on every channel, and
-zero-config mDNS discovery.
+Synergy is the mature commercial option with broad platform support. Deskflow
+carries the open-source continuation of the Synergy 1 codebase. ShareClick is a
+separate, newer implementation focused on a free and encrypted Mac-to-Windows
+workflow.
+
+## Moving from Synergy to ShareClick
+
+There is no configuration import because the projects use different formats and
+protocols. Install ShareClick on both computers, pair them, arrange the displays
+and confirm macOS permissions and the Windows firewall rule. Keep Synergy
+installed until the new setup has passed normal keyboard, clipboard and
+file-transfer tests.
 
 - [Download ShareClick (free)](https://github.com/phun333/ShareClick/releases)
 - [Setup guide](https://phun333.github.io/ShareClick/how-to-share-mouse-keyboard-mac-windows.md)
-
+- [Synergy alternatives compared](https://phun333.github.io/ShareClick/synergy-alternatives.md)
 
 ---
+
+Source page: https://phun333.github.io/ShareClick/vs-sharemouse.md
 
 # ShareClick vs ShareMouse
 
 > A free, open-source ShareMouse alternative to share mouse, keyboard, clipboard
-> and files between Mac and Windows. Encrypted, low-latency.
+> and files between Mac and Windows. Encrypted and designed for low input latency.
 
 Want a **free, open-source ShareMouse alternative**? ShareClick shares one mouse,
-keyboard, clipboard and files across your Mac and Windows PC — no license nag,
-encrypted by default, and open source.
+keyboard, clipboard and files across your Mac and Windows PC with no license key,
+encryption on every channel and source code available under MIT or Apache-2.0.
+
+Compared against the [official ShareMouse feature and licensing pages](https://www.sharemouse.com/)
+on **August 22, 2026**.
 
 | Feature | ShareClick | ShareMouse |
 | --- | --- | --- |
-| Price | **Free (always)** | Free for 2 personal PCs; paid license otherwise |
+| Price | **Free and open source** | Restricted freeware; paid editions available |
 | Open source | Yes (MIT / Apache) | No |
 | Mac & Windows | Yes | Yes |
 | Easy auto-setup | mDNS discovery | Yes (auto-detect) |
@@ -240,185 +651,367 @@ encrypted by default, and open source.
 | Input latency focus | **~6 µs transport (UDP)** | Good |
 | Commercial use | **Free** | Requires paid license |
 
+## Freeware and paid editions
+
+ShareClick has no paid tier and no distinction between personal and professional
+use under its open-source licenses. ShareMouse offers a restricted freeware mode
+for qualifying personal setups. Its official policy excludes professional use
+and larger or more advanced display arrangements; paid editions unlock
+commercial use and additional features.
+
+Because licensing terms and product editions can change, verify the current
+ShareMouse shop and freeware policy for the exact number of computers and
+displays in your setup. ShareClick's trade-off is different: no license cost,
+but a younger pre-release project without commercial support.
+
+## File transfer and daily workflow
+
+ShareMouse's file drag and drop is a mature part of its product experience: users
+can move a file between supported computers through the same desktop workflow.
+ShareClick transfers files over an encrypted reliable channel but does not claim
+the same level of drag-and-drop polish. If file movement is the dominant task,
+test both with the applications and file sizes you use every day.
+
+Both products also synchronize clipboard content and allow control from either
+Mac or Windows. ShareClick adds an open protocol implementation and keeps input
+traffic separate from reliable clipboard and file traffic.
+
+## Security and network model
+
+Both products work across a local network and support encrypted connections.
+ShareClick authenticates pairing with a shared secret, derives ephemeral keys
+with X25519 and encrypts both channels using ChaCha20-Poly1305. ShareMouse
+documents password protection and AES encryption. In either case, pair only
+computers you trust because software KVM tools handle keyboard input and
+clipboard contents.
+
+## What the latency number means
+
+ShareClick's approximately 6 µs value is local loopback transport overhead, not
+a full end-to-end comparison with ShareMouse. Capture, Wi-Fi or Ethernet,
+operating-system scheduling, input injection and monitor refresh all affect
+perceived latency. ShareClick's architectural claim is narrower: mouse and
+keyboard packets use a dedicated UDP channel so clipboard or file traffic cannot
+block input.
+
 ## Which should you pick?
 
-- **Choose ShareClick** if you want it **free forever** (including at work), open
-  source, encrypted by default, and as low-latency as possible.
-- **Choose ShareMouse** if you want its very polished drag-and-drop and don't mind
-  a paid license for more than two computers or commercial use.
+- **Choose ShareClick** if you want open-source licensing for personal or
+  professional use, encryption by default and a low-latency Mac-to-Windows
+  design.
+- **Choose ShareMouse** if you want its polished drag and drop and do not mind a
+  paid license for professional or advanced use.
 
-ShareMouse is a slick, well-established tool with excellent file drag-and-drop.
-ShareClick matches the core feature set — input, clipboard (text + images),
-files — while staying free, open source, and license-free for any number of
-machines.
+ShareMouse is the more established commercial product and has a polished file
+drag-and-drop workflow. ShareClick covers input, clipboard text and images, and
+encrypted files while staying free and open source. ShareClick is still
+pre-release, so test it with your exact Mac, Windows version and monitor
+arrangement before replacing a production setup.
+
+## Moving from ShareMouse to ShareClick
+
+Install ShareClick on both computers, pair them and reproduce the physical
+display layout. Approve Accessibility and Input Monitoring on macOS and the
+firewall prompt on Windows. There is no configuration import. Keep ShareMouse
+available until mouse crossing, keyboard layouts, clipboard images and file
+transfer have all been tested.
 
 - [Download ShareClick (free)](https://github.com/phun333/ShareClick/releases)
 - [Setup guide](https://phun333.github.io/ShareClick/how-to-share-mouse-keyboard-mac-windows.md)
-
+- [Keyboard-and-mouse sharing alternatives](https://phun333.github.io/ShareClick/synergy-alternatives.md)
 
 ---
 
+Source page: https://phun333.github.io/ShareClick/vs-barrier.md
+
 # ShareClick vs Barrier
 
-> Barrier is no longer maintained. ShareClick is a modern, actively developed
-> successor — encrypted by default, with clipboard images, file transfer and
-> zero-config discovery.
+> Barrier is no longer maintained. ShareClick is an actively developed
+> alternative for encrypted Mac-to-Windows keyboard, mouse, clipboard and file
+> sharing.
 
-Barrier was a great open-source KVM, but it is **no longer maintained**.
-ShareClick is a modern, actively developed successor — encrypted by default, with
-clipboard images, file transfer and zero-config discovery.
+Barrier was a widely used open-source software KVM, but its official release page
+says it is **no longer maintained** and no longer receives improvements or
+security fixes. ShareClick is a separate, actively developed alternative for
+encrypted Mac-to-Windows input, clipboard and file sharing.
+
+Status checked against the [official Barrier release page](https://github.com/debauchee/barrier/releases)
+on **August 22, 2026**.
 
 | Feature | ShareClick | Barrier |
 | --- | --- | --- |
 | Price | Free & open source | Free & open source |
-| Actively maintained | **Yes** | No (archived) |
-| Encryption | **On by default (X25519 + ChaCha20)** | Optional SSL (manual setup) |
-| Clipboard images | Yes | Text mainly |
+| Project status | **Active, pre-release** | Unmaintained |
+| Encryption | **On by default (X25519 + ChaCha20)** | SSL support |
+| Clipboard | Text + images | Supported |
 | File transfer | **Yes** | No |
 | Auto discovery | **mDNS (no IPs)** | Manual IP setup |
 | Input transport | **UDP, ~6 µs** | TCP |
 | Mac & Windows | Yes | Yes |
 
+## Why maintenance status matters
+
+A software KVM captures keyboard and mouse input and may read sensitive clipboard
+content. An unmaintained build can continue working, but users should not expect
+compatibility fixes for new macOS or Windows releases or patches for newly
+reported security issues. Barrier's own release page directs users toward Input
+Leap; the Input Leap repository was later archived in July 2026.
+
+Existing Barrier users do not need to panic or uninstall a working setup
+immediately. For a new installation, however, maintenance status should be part
+of the decision alongside platform support and features.
+
+## Feature and architecture differences
+
+Barrier follows the classic Synergy client/server model and supports macOS,
+Windows and Linux. ShareClick currently focuses on macOS and Windows and is still
+pre-release. ShareClick separates low-latency UDP input from reliable clipboard
+and file traffic, encrypts both channels and uses mDNS for discovery.
+
+Barrier remains broader for older Linux setups. ShareClick adds clipboard images
+and a dedicated file-transfer path, but it does not yet replace Barrier for users
+who require Linux. Deskflow is another maintained open-source option worth
+evaluating for that use case.
+
 ## The short version
 
-**Barrier is unmaintained** — most users are migrating away. **ShareClick** gives
-you the same "one keyboard & mouse" idea, but actively developed, encrypted by
-default, with file transfer, clipboard images, and mDNS discovery so you never
-type an IP.
+**Barrier is unmaintained.** ShareClick provides the same basic
+one-keyboard-and-mouse workflow for Mac and Windows, with active development,
+encryption on every channel, file transfer, clipboard images and mDNS discovery.
 
-If you liked Barrier (or Input Leap, its fork) and want something current and
-secure for Mac↔Windows, ShareClick is a drop-in reason to switch.
+## Moving from Barrier to ShareClick
+
+ShareClick cannot import a Barrier configuration because the applications use
+different protocols and layout formats. Install ShareClick on both computers,
+pair them and recreate the physical screen arrangement. Approve macOS
+Accessibility and Input Monitoring and allow the Windows firewall rule before
+testing keyboard, clipboard and file transfer.
+
+Keep Barrier installed until the new setup works with your keyboard layout and
+monitor arrangement. If Linux is part of the desk, compare Deskflow and Lan Mouse
+before choosing a replacement.
 
 - [Download ShareClick (free)](https://github.com/phun333/ShareClick/releases)
 - [Setup guide](https://phun333.github.io/ShareClick/how-to-share-mouse-keyboard-mac-windows.md)
-
+- [Synergy alternatives compared](https://phun333.github.io/ShareClick/synergy-alternatives.md)
 
 ---
+
+Source page: https://phun333.github.io/ShareClick/vs-mouse-without-borders.md
 
 # ShareClick vs Mouse Without Borders
 
-> A free, open-source alternative to Mouse Without Borders that also works on Mac.
-> Share mouse, keyboard, clipboard and files between Mac and Windows. Encrypted.
+> Compare ShareClick with Microsoft Mouse Without Borders. ShareClick adds the
+> missing Mac-to-Windows path, while Mouse Without Borders serves Windows-only
+> desks through PowerToys.
 
-Mouse Without Borders is a great free tool from Microsoft — but it is
-**Windows-only**. If you need to share one keyboard and mouse between a **Mac and
-a Windows PC**, ShareClick does it: open source, encrypted by default, with
-clipboard and file sharing built in.
+Microsoft Mouse Without Borders is a free PowerToys utility for controlling up
+to four Windows computers. It is **Windows-only**. ShareClick covers the same
+desk workflow when one computer is a **Mac**, with encrypted clipboard and file
+sharing over the local network.
+
+Compared against the [official Microsoft PowerToys documentation](https://learn.microsoft.com/windows/powertoys/mouse-without-borders)
+on **August 22, 2026**.
 
 | Feature | ShareClick | Mouse Without Borders |
 | --- | --- | --- |
-| Price | Free & open source | Free (Microsoft Garage) |
+| Price | Free & open source | Free (Microsoft PowerToys) |
 | Works on Mac | **Yes** | No (Windows only) |
 | Works on Windows | Yes | Yes |
-| Open source | **Yes (MIT/Apache)** | No |
+| Open source | Yes (MIT / Apache) | Yes (PowerToys) |
 | Clipboard (text + images) | Yes | Yes |
 | File transfer | Yes | Yes |
-| Encryption | **On by default (X25519 + ChaCha20)** | Limited |
-| Auto discovery | **mDNS (no IPs)** | Manual (security code) |
-| Input transport | **UDP, ~6 µs** | TCP |
+| Pairing security | X25519 + ChaCha20 encryption | Security key + computer name |
+| Auto discovery | **mDNS (no IPs)** | Security key + machine names |
+| Input transport | **UDP, ~6 µs** | Network transport |
+
+## The platform decision
+
+Mouse Without Borders is a direct fit when every computer runs Windows 10 or
+Windows 11. It is integrated into PowerToys, supports up to four computers and
+includes clipboard and file transfer. There is no macOS client, so it cannot
+bridge a Mac and PC.
+
+ShareClick currently supports macOS and Windows and is designed around a
+two-platform desk. It is an independent pre-release project rather than a
+Microsoft utility. That gives users an inspectable open protocol and
+cross-platform support, while Mouse Without Borders offers the maturity and
+distribution of PowerToys.
+
+## Clipboard and files
+
+Both tools move more than input. Microsoft documents clipboard sharing and file
+transfer between connected Windows computers. ShareClick synchronizes clipboard
+text and images between Mac and Windows and sends files through a separate
+reliable encrypted channel.
+
+## Setup differences
+
+Mouse Without Borders pairs Windows machines using a security key and computer
+name inside PowerToys. ShareClick advertises devices over mDNS, authenticates the
+pair and exchanges the screen arrangement. Both require local firewall access
+and work best when the computers can reach each other directly on the same LAN.
 
 ## Which should you pick?
 
-- **Choose ShareClick** if either machine is a **Mac** — Mouse Without Borders
-  can't help there. You also get open source, encryption on by default, and
-  zero-config discovery.
-- **Choose Mouse Without Borders** if **all** your machines run Windows and you're
-  happy with a closed-source Microsoft tool.
+- **Choose ShareClick** if either machine is a **Mac**. Mouse Without Borders has
+  no macOS client.
+- **Choose Mouse Without Borders** if **all** machines run Windows and you want
+  PowerToys integration and support for up to four PCs.
 
-Mouse Without Borders is polished and genuinely free, but it never left Windows.
-ShareClick brings the same "one keyboard & mouse across machines" idea to
-**Mac↔Windows**, with a UDP input path (~6 µs transport overhead), encryption on
-every channel, and mDNS discovery so you never type an IP.
+Mouse Without Borders is the straightforward free choice for Windows-only desks.
+ShareClick brings the same one-keyboard-and-mouse idea to Mac and Windows, with a
+dedicated UDP input path, encryption on every channel and mDNS discovery.
+ShareClick's ~6 µs measurement is loopback transport overhead, not a direct
+end-to-end benchmark against the Microsoft tool.
 
 - [Download ShareClick (free)](https://github.com/phun333/ShareClick/releases)
+- [Mac and Windows clipboard guide](https://phun333.github.io/ShareClick/share-clipboard-between-mac-and-windows.md)
 - [Setup guide](https://phun333.github.io/ShareClick/how-to-share-mouse-keyboard-mac-windows.md)
-
+- [Keyboard-and-mouse sharing alternatives](https://phun333.github.io/ShareClick/synergy-alternatives.md)
 
 ---
 
-# ShareClick vs Universal Control
+Source page: https://phun333.github.io/ShareClick/vs-universal-control.md
 
-> Like Apple Universal Control, but across Mac and Windows. Share one keyboard,
-> mouse, clipboard and files between a Mac and a Windows PC. Free, open source,
-> encrypted. The practical "Universal Control for Windows".
+# Universal Control for Windows: ShareClick vs Apple Universal Control
 
-Apple's **Universal Control** lets one keyboard and mouse roam across a Mac and an
-iPad — but only inside Apple's ecosystem. There is **no Universal Control for
-Windows**. ShareClick gives you that same seamless feel between a **Mac and a
-Windows PC** — free, open source, and encrypted.
+> Apple Universal Control does not support Windows. ShareClick provides a free,
+> open-source Mac-to-Windows alternative with keyboard, mouse, clipboard and file
+> sharing over an encrypted local connection.
+
+Apple's **Universal Control** lets one keyboard and mouse move across supported
+Macs and iPads, but it does not support Windows. ShareClick is a free,
+open-source **Universal Control for Windows alternative** for a Mac and Windows
+PC, with clipboard and file sharing over an encrypted local connection.
+
+Apple platform support checked against the [official Universal Control documentation](https://support.apple.com/en-us/102459)
+on **August 22, 2026**.
 
 | Feature | ShareClick | Universal Control |
 | --- | --- | --- |
 | Price | Free & open source | Free (built into macOS) |
 | Works with Windows | **Yes** | No (Apple devices only) |
-| Mac ↔ Windows | **Yes** | No |
-| Mac ↔ Mac / iPad | Any two computers | Yes |
+| Mac + Windows | **Yes** | No |
+| Mac / iPad workflow | Mac + Windows computers | Supported Apple devices |
 | Clipboard (text + images) | Yes | Yes |
-| File transfer | Yes (any pair) | Drag & drop (Apple only) |
-| Setup | Shared passphrase + screen edges | Same Apple ID / iCloud |
-| Open source | **Yes (MIT/Apache)** | No |
-| Encryption | X25519 + ChaCha20-Poly1305 | Apple end-to-end |
+| File transfer | Yes | Apple app and device workflows |
+| Setup | Local pairing + screen layout | Same Apple Account + Apple requirements |
+| Open source | Yes (MIT / Apache) | No |
+| Security model | X25519 + ChaCha20-Poly1305 | Managed by Apple platforms |
+
+## Why Universal Control does not work with Windows
+
+Universal Control is an operating-system feature tied to supported Apple
+devices, the same Apple Account, Bluetooth, Wi-Fi and Handoff requirements.
+Apple does not provide a Windows client. Installing iCloud for Windows does not
+add Universal Control.
+
+A cross-platform software KVM solves a similar interaction problem at the
+network level. ShareClick runs on both computers, captures input on the active
+machine and sends it to the paired machine when the pointer crosses a configured
+display edge.
+
+## Setup and account requirements
+
+Universal Control is nearly invisible when the Apple prerequisites are already
+in place: the devices use the same Apple Account and Apple configures the
+connection. ShareClick does not require an Apple Account, Microsoft account or
+ShareClick cloud account. The computers pair on the LAN, exchange their monitor
+arrangement and authenticate the encrypted connection.
+
+ShareClick requires installation and operating-system permissions on both
+machines. On macOS that includes Accessibility and Input Monitoring; Windows may
+request a firewall rule. This is more setup than a built-in Apple feature, but it
+crosses the platform boundary.
+
+## Clipboard and file movement
+
+Both approaches let users move work between screens, but compatibility differs.
+ShareClick synchronizes clipboard text and images between Mac and Windows and
+transfers files over a reliable encrypted channel. Universal Control supports
+Apple workflows between compatible apps and devices. Neither product streams the
+display: each device continues using its own screen.
 
 ## Which should you pick?
 
-- **Choose ShareClick** if one of your machines is a **Windows PC** — Universal
-  Control simply doesn't support Windows. It's the practical "Universal Control
-  for Windows".
-- **Choose Universal Control** if you only ever move between **Apple devices**
-  (Mac and iPad) on the same Apple ID.
+- **Choose ShareClick** if one machine is a **Windows PC**. Universal Control
+  does not support Windows.
+- **Choose Universal Control** if you only move between supported **Apple
+  devices** and already meet Apple's account and connectivity requirements.
 
-Universal Control is a lovely feature, but it stops at the edge of Apple's
-ecosystem. ShareClick delivers the same "push your cursor to the next screen"
-experience across **Mac↔Windows**, with clipboard sync, file transfer, encryption
-on every channel, and a UDP input path (~6 µs transport overhead) for the lowest
-possible lag.
+Universal Control is the better fit inside a supported all-Apple setup because
+it is built into the operating system. ShareClick addresses the missing
+Mac-to-Windows case with clipboard sync, file transfer, encryption on every
+channel and a dedicated UDP input path. ShareClick is pre-release software, so
+test permissions, keyboard layout and display arrangement on the exact machines
+you plan to use.
 
 - [Download ShareClick (free)](https://github.com/phun333/ShareClick/releases)
-- [Setup guide](https://phun333.github.io/ShareClick/how-to-share-mouse-keyboard-mac-windows.md)
-
+- [Mac and Windows setup guide](https://phun333.github.io/ShareClick/how-to-share-mouse-keyboard-mac-windows.md)
+- [Share clipboard between Mac and Windows](https://phun333.github.io/ShareClick/share-clipboard-between-mac-and-windows.md)
+- [Compare software KVM options](https://phun333.github.io/ShareClick/synergy-alternatives.md)
 
 ---
 
+Source page: https://phun333.github.io/ShareClick/vs-input-leap.md
+
 # ShareClick vs Input Leap
 
-> A free, open-source Input Leap alternative: encrypted by default, clipboard
-> images, file transfer and mDNS discovery for Mac and Windows.
+> Input Leap was archived in July 2026. Compare its platforms, clipboard support
+> and maintenance status with the free, open-source ShareClick software KVM.
 
-Input Leap is the community-maintained fork of Barrier — a solid, cross-platform
-open-source KVM. ShareClick covers the same core idea for **Mac↔Windows**, but is
-**encrypted by default**, ships **file transfer** and clipboard images, and uses
-zero-config discovery so you never type an IP.
+Input Leap was the community-maintained fork of Barrier, supporting keyboard,
+mouse and clipboard sharing across macOS, Windows, Linux and BSD. Its GitHub
+repository was **archived on July 26, 2026** and is now read-only. ShareClick is
+an actively developed, free alternative focused on encrypted **Mac-to-Windows**
+sharing.
+
+Status checked against the [official Input Leap repository](https://github.com/input-leap/input-leap)
+on **August 22, 2026**.
 
 | Feature | ShareClick | Input Leap |
 | --- | --- | --- |
 | Price | Free & open source | Free & open source |
-| Actively maintained | Yes | Yes |
-| Encryption | **On by default (X25519 + ChaCha20)** | Optional (manual TLS) |
-| Clipboard images | Yes | Text mainly |
-| File transfer | **Yes** | Limited / No |
-| Auto discovery | **mDNS (no IPs)** | Manual IP setup |
+| Project status | Active, pre-release | Archived July 2026 |
+| Encryption | **On by default (X25519 + ChaCha20)** | TLS available |
+| Clipboard | Text + images | Supported; not on Linux/Wayland |
+| File transfer | **Yes** | No |
+| Discovery | **mDNS (no IPs)** | Bonjour or manual server address |
 | Input transport | **UDP, ~6 µs** | TCP |
 | Linux | Work in progress | Yes |
 | Mac & Windows | Yes | Yes |
 
 ## Which should you pick?
 
-- **Choose ShareClick** for **Mac↔Windows** if you want encryption on by default,
-  file transfer, clipboard images and mDNS discovery out of the box, with the
-  lowest input lag.
-- **Choose Input Leap** if you need broad **Linux** support and a very mature,
-  multi-platform codebase.
+- **Choose ShareClick** for **Mac-to-Windows** if you want encryption on by
+  default, file transfer, clipboard images and mDNS discovery, and pre-release
+  software is acceptable.
+- **Keep Input Leap** if an existing installation works for you and its archived
+  status is acceptable. For a new Linux deployment, evaluate an actively
+  maintained option such as Deskflow or Lan Mouse.
 
-Input Leap (and Barrier before it) proved how useful a software KVM is. ShareClick
-is the newer, security-first take focused on Mac↔Windows: a UDP input path (~6 µs
-transport overhead), encryption on every channel, clipboard images, file transfer,
-and mDNS discovery.
+## What does archived mean?
+
+Archiving does not disable Input Leap or remove its releases. It means the
+repository is read-only, so users should not expect fixes for future
+operating-system changes or newly reported security issues from that project.
+This matters for software that captures keyboard input and reads clipboard data.
+
+Input Leap and Barrier proved how useful an open-source software KVM can be.
+ShareClick is a newer, security-focused implementation for Mac and Windows: a
+UDP input path (~6 µs transport overhead), encryption on every channel,
+clipboard images, file transfer and mDNS discovery. ShareClick is still
+pre-release, so users who require Linux or a longer production history should
+also evaluate Deskflow.
 
 - [Download ShareClick (free)](https://github.com/phun333/ShareClick/releases)
 - [Setup guide](https://phun333.github.io/ShareClick/how-to-share-mouse-keyboard-mac-windows.md)
-
+- [2026 Synergy alternatives comparison](https://phun333.github.io/ShareClick/synergy-alternatives.md)
 
 ---
+
+Source page: https://phun333.github.io/ShareClick/pricing.md
 
 # Pricing — ShareClick
 
@@ -436,7 +1029,3 @@ subscriptions, and no license for the number of computers you use.
 - Requirements: both machines on the same local network (LAN); no cloud account
 
 Download: https://github.com/phun333/ShareClick/releases
-
-
----
-

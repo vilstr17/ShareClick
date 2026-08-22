@@ -1,37 +1,52 @@
 # ShareClick vs Input Leap
 
-> A free, open-source Input Leap alternative: encrypted by default, clipboard
-> images, file transfer and mDNS discovery for Mac and Windows.
+> Input Leap was archived in July 2026. Compare its platforms, clipboard support
+> and maintenance status with the free, open-source ShareClick software KVM.
 
-Input Leap is the community-maintained fork of Barrier — a solid, cross-platform
-open-source KVM. ShareClick covers the same core idea for **Mac↔Windows**, but is
-**encrypted by default**, ships **file transfer** and clipboard images, and uses
-zero-config discovery so you never type an IP.
+Input Leap was the community-maintained fork of Barrier, supporting keyboard,
+mouse and clipboard sharing across macOS, Windows, Linux and BSD. Its GitHub
+repository was **archived on July 26, 2026** and is now read-only. ShareClick is
+an actively developed, free alternative focused on encrypted **Mac-to-Windows**
+sharing.
+
+Status checked against the [official Input Leap repository](https://github.com/input-leap/input-leap)
+on **August 22, 2026**.
 
 | Feature | ShareClick | Input Leap |
 | --- | --- | --- |
 | Price | Free & open source | Free & open source |
-| Actively maintained | Yes | Yes |
-| Encryption | **On by default (X25519 + ChaCha20)** | Optional (manual TLS) |
-| Clipboard images | Yes | Text mainly |
-| File transfer | **Yes** | Limited / No |
-| Auto discovery | **mDNS (no IPs)** | Manual IP setup |
+| Project status | Active, pre-release | Archived July 2026 |
+| Encryption | **On by default (X25519 + ChaCha20)** | TLS available |
+| Clipboard | Text + images | Supported; not on Linux/Wayland |
+| File transfer | **Yes** | No |
+| Discovery | **mDNS (no IPs)** | Bonjour or manual server address |
 | Input transport | **UDP, ~6 µs** | TCP |
 | Linux | Work in progress | Yes |
 | Mac & Windows | Yes | Yes |
 
 ## Which should you pick?
 
-- **Choose ShareClick** for **Mac↔Windows** if you want encryption on by default,
-  file transfer, clipboard images and mDNS discovery out of the box, with the
-  lowest input lag.
-- **Choose Input Leap** if you need broad **Linux** support and a very mature,
-  multi-platform codebase.
+- **Choose ShareClick** for **Mac-to-Windows** if you want encryption on by
+  default, file transfer, clipboard images and mDNS discovery, and pre-release
+  software is acceptable.
+- **Keep Input Leap** if an existing installation works for you and its archived
+  status is acceptable. For a new Linux deployment, evaluate an actively
+  maintained option such as Deskflow or Lan Mouse.
 
-Input Leap (and Barrier before it) proved how useful a software KVM is. ShareClick
-is the newer, security-first take focused on Mac↔Windows: a UDP input path (~6 µs
-transport overhead), encryption on every channel, clipboard images, file transfer,
-and mDNS discovery.
+## What does archived mean?
+
+Archiving does not disable Input Leap or remove its releases. It means the
+repository is read-only, so users should not expect fixes for future
+operating-system changes or newly reported security issues from that project.
+This matters for software that captures keyboard input and reads clipboard data.
+
+Input Leap and Barrier proved how useful an open-source software KVM can be.
+ShareClick is a newer, security-focused implementation for Mac and Windows: a
+UDP input path (~6 µs transport overhead), encryption on every channel,
+clipboard images, file transfer and mDNS discovery. ShareClick is still
+pre-release, so users who require Linux or a longer production history should
+also evaluate Deskflow.
 
 - [Download ShareClick (free)](https://github.com/phun333/ShareClick/releases)
 - [Setup guide](https://phun333.github.io/ShareClick/how-to-share-mouse-keyboard-mac-windows.md)
+- [2026 Synergy alternatives comparison](https://phun333.github.io/ShareClick/synergy-alternatives.md)

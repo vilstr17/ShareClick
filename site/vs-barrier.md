@@ -1,33 +1,70 @@
 # ShareClick vs Barrier
 
-> Barrier is no longer maintained. ShareClick is a modern, actively developed
-> successor — encrypted by default, with clipboard images, file transfer and
-> zero-config discovery.
+> Barrier is no longer maintained. ShareClick is an actively developed
+> alternative for encrypted Mac-to-Windows keyboard, mouse, clipboard and file
+> sharing.
 
-Barrier was a great open-source KVM, but it is **no longer maintained**.
-ShareClick is a modern, actively developed successor — encrypted by default, with
-clipboard images, file transfer and zero-config discovery.
+Barrier was a widely used open-source software KVM, but its official release page
+says it is **no longer maintained** and no longer receives improvements or
+security fixes. ShareClick is a separate, actively developed alternative for
+encrypted Mac-to-Windows input, clipboard and file sharing.
+
+Status checked against the [official Barrier release page](https://github.com/debauchee/barrier/releases)
+on **August 22, 2026**.
 
 | Feature | ShareClick | Barrier |
 | --- | --- | --- |
 | Price | Free & open source | Free & open source |
-| Actively maintained | **Yes** | No (archived) |
-| Encryption | **On by default (X25519 + ChaCha20)** | Optional SSL (manual setup) |
-| Clipboard images | Yes | Text mainly |
+| Project status | **Active, pre-release** | Unmaintained |
+| Encryption | **On by default (X25519 + ChaCha20)** | SSL support |
+| Clipboard | Text + images | Supported |
 | File transfer | **Yes** | No |
 | Auto discovery | **mDNS (no IPs)** | Manual IP setup |
 | Input transport | **UDP, ~6 µs** | TCP |
 | Mac & Windows | Yes | Yes |
 
+## Why maintenance status matters
+
+A software KVM captures keyboard and mouse input and may read sensitive clipboard
+content. An unmaintained build can continue working, but users should not expect
+compatibility fixes for new macOS or Windows releases or patches for newly
+reported security issues. Barrier's own release page directs users toward Input
+Leap; the Input Leap repository was later archived in July 2026.
+
+Existing Barrier users do not need to panic or uninstall a working setup
+immediately. For a new installation, however, maintenance status should be part
+of the decision alongside platform support and features.
+
+## Feature and architecture differences
+
+Barrier follows the classic Synergy client/server model and supports macOS,
+Windows and Linux. ShareClick currently focuses on macOS and Windows and is still
+pre-release. ShareClick separates low-latency UDP input from reliable clipboard
+and file traffic, encrypts both channels and uses mDNS for discovery.
+
+Barrier remains broader for older Linux setups. ShareClick adds clipboard images
+and a dedicated file-transfer path, but it does not yet replace Barrier for users
+who require Linux. Deskflow is another maintained open-source option worth
+evaluating for that use case.
+
 ## The short version
 
-**Barrier is unmaintained** — most users are migrating away. **ShareClick** gives
-you the same "one keyboard & mouse" idea, but actively developed, encrypted by
-default, with file transfer, clipboard images, and mDNS discovery so you never
-type an IP.
+**Barrier is unmaintained.** ShareClick provides the same basic
+one-keyboard-and-mouse workflow for Mac and Windows, with active development,
+encryption on every channel, file transfer, clipboard images and mDNS discovery.
 
-If you liked Barrier (or Input Leap, its fork) and want something current and
-secure for Mac↔Windows, ShareClick is a drop-in reason to switch.
+## Moving from Barrier to ShareClick
+
+ShareClick cannot import a Barrier configuration because the applications use
+different protocols and layout formats. Install ShareClick on both computers,
+pair them and recreate the physical screen arrangement. Approve macOS
+Accessibility and Input Monitoring and allow the Windows firewall rule before
+testing keyboard, clipboard and file transfer.
+
+Keep Barrier installed until the new setup works with your keyboard layout and
+monitor arrangement. If Linux is part of the desk, compare Deskflow and Lan Mouse
+before choosing a replacement.
 
 - [Download ShareClick (free)](https://github.com/phun333/ShareClick/releases)
 - [Setup guide](https://phun333.github.io/ShareClick/how-to-share-mouse-keyboard-mac-windows.md)
+- [Synergy alternatives compared](https://phun333.github.io/ShareClick/synergy-alternatives.md)

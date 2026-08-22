@@ -11,6 +11,9 @@ All notable changes to ShareClick are documented here. The format is based on
 - **Privacy-friendly website analytics** — Umami pageview tracking across the
   GitHub Pages site, with separate release-page click events for macOS, Windows,
   guides, and comparison pages.
+- **Search-focused website guides** — an evidence-based 2026 Synergy alternatives
+  comparison and a Mac-to-Windows clipboard-sharing guide, plus stronger homepage
+  targeting, internal links, metadata, and current sitemap dates.
 - **Symmetric control (ShareMouse-style)** — both machines are equals: use
   EITHER machine's mouse & keyboard, whichever you grab. Exactly one pointer is
   "away" at a time; the visited machine's real cursor is driven directly, so

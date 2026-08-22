@@ -91,6 +91,50 @@
       computer. Push back to return. Copy on one machine and paste on the other; the
       <strong>clipboard syncs automatically</strong>, and you can send files too.</p>
 
+      <h2>what ShareClick shares</h2>
+      <table class="cmp">
+        <colgroup><col class="c1"><col></colgroup>
+        <thead><tr><th>Capability</th><th>Behavior</th></tr></thead>
+        <tbody>
+          <tr><td>Mouse and keyboard</td><td>Control crosses when the pointer reaches the configured screen edge</td></tr>
+          <tr><td>Clipboard text</td><td class="yes">Copy and paste in both directions</td></tr>
+          <tr><td>Clipboard images</td><td class="yes">Synchronized between macOS and Windows</td></tr>
+          <tr><td>Files</td><td class="yes">Transferred over the encrypted reliable channel</td></tr>
+          <tr><td>Video/display</td><td>Not shared; each computer continues using its own monitor</td></tr>
+        </tbody>
+      </table>
+      <p>If clipboard sharing is your main requirement, see the dedicated guide to
+      <a href="share-clipboard-between-mac-and-windows.html">sharing a clipboard between Mac and
+      Windows</a>.</p>
+
+      <h2>common setup problems</h2>
+      <h3>the computers cannot find each other</h3>
+      <p>Confirm that both computers are on the same local network. Guest Wi-Fi often blocks devices
+      from reaching each other. On Windows, check that the firewall rule allows ShareClick. Wired
+      Ethernet also works and can make network troubleshooting simpler.</p>
+
+      <h3>the Mac does not accept remote input</h3>
+      <p>Reopen System Settings, check Accessibility and Input Monitoring, then restart ShareClick.
+      macOS permissions are attached to the installed application, so moving or replacing the app
+      can require approval again.</p>
+
+      <h3>the cursor crosses on the wrong side</h3>
+      <p>Open the monitor arrangement and place the Mac and Windows display in the same physical
+      order as the desk. The shared edge in the layout determines where the pointer leaves and where
+      it appears.</p>
+
+      <h3>clipboard or files do not arrive</h3>
+      <p>First confirm that mouse control is connected. Test clipboard sync with a short line of
+      plain text before trying an image or application-specific format. Clipboard changes made while
+      disconnected are not queued for later delivery.</p>
+
+      <h2>software KVM or hardware KVM?</h2>
+      <p>ShareClick is a <a href="what-is-a-software-kvm.html">software KVM</a>: it shares input over
+      the LAN while every computer keeps its own display. A hardware KVM physically switches a
+      keyboard, mouse and monitor between computers. Use hardware when one monitor must display
+      several machines or when you need BIOS-level control. Use software when both screens stay
+      visible and you want seamless pointer, clipboard and file movement.</p>
+
       <div class="verdict">
         <p>That's it. One keyboard, one mouse, one clipboard across your Mac and Windows PC —
         <b>encrypted, low-latency, and free</b>.</p>
@@ -106,6 +150,8 @@
   <footer>
     <a href="./">shareclick</a> · <a href="vs-synergy.html">vs Synergy</a> ·
     <a href="vs-sharemouse.html">vs ShareMouse</a> · <a href="vs-barrier.html">vs Barrier</a> ·
+    <a href="synergy-alternatives.html">Synergy alternatives</a> ·
+    <a href="share-clipboard-between-mac-and-windows.html">clipboard guide</a> ·
     <a href="https://github.com/phun333/ShareClick">GitHub</a>
   </footer>
 </main>

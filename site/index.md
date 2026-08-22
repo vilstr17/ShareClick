@@ -8,7 +8,7 @@ control both a Mac and a Windows PC over your local network, with clipboard (tex
 and images) and file sharing built in. Every channel is end-to-end encrypted
 (X25519 key exchange + ChaCha20-Poly1305) and it runs LAN-only — no hardware, no
 cloud, no account. It is a free alternative to Synergy, ShareMouse, Barrier and
-Input Leap, built for the lowest input lag (~6 µs transport overhead).
+Input Leap, with a low-latency UDP input path (~6 µs measured loopback transport overhead).
 
 - **Price:** Free — open source (MIT / Apache-2.0), unlimited machines
 - **Platforms:** macOS and Windows
@@ -23,7 +23,7 @@ Input Leap, built for the lowest input lag (~6 µs transport overhead).
 - End-to-end encryption (X25519 + ChaCha20-Poly1305), authenticated by a shared passphrase
 - Automatic screen-edge switching — push the cursor to the border to switch machines (plus a hotkey)
 - mDNS zero-config discovery — no IP addresses to type
-- Lowest input lag: ~6 µs transport overhead on a UDP input path
+- Low-latency input design: ~6 µs measured loopback transport overhead on a UDP path
 
 ## FAQ
 
@@ -62,5 +62,7 @@ shared passphrase.
 - [ShareClick vs Synergy](https://phun333.github.io/ShareClick/vs-synergy.md)
 - [ShareClick vs ShareMouse](https://phun333.github.io/ShareClick/vs-sharemouse.md)
 - [ShareClick vs Barrier](https://phun333.github.io/ShareClick/vs-barrier.md)
+- [Synergy alternatives compared](https://phun333.github.io/ShareClick/synergy-alternatives.md)
+- [Share clipboard between Mac and Windows](https://phun333.github.io/ShareClick/share-clipboard-between-mac-and-windows.md)
 - [Pricing](https://phun333.github.io/ShareClick/pricing.md)
 - [Install help](https://github.com/phun333/ShareClick/blob/main/docs/INSTALL.md)

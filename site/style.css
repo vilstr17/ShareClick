@@ -33,7 +33,10 @@ header a.icon svg{width:20px;height:20px}
 main{flex:1;display:flex;flex-direction:column;justify-content:center;padding:40px 0}
 .hero{text-align:center}
 h1{font-size:clamp(72px,15vw,180px);font-weight:800;letter-spacing:-.045em;line-height:.9;margin:0}
-.tag{color:var(--muted);font-size:clamp(15px,2.6vw,19px);margin:20px auto 0;max-width:520px}
+.hero h1 .brand{display:block}
+.hero h1 .search-title{display:block;max-width:760px;margin:24px auto 0;font-size:clamp(25px,4.5vw,42px);
+  line-height:1.12;letter-spacing:-.035em}
+.tag{color:var(--muted);font-size:clamp(15px,2.6vw,19px);margin:18px auto 0;max-width:650px}
 .tag b{color:var(--ink);font-weight:500}
 
 .cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin:36px 0 0}
@@ -93,9 +96,13 @@ article h1{font-size:clamp(30px,6vw,46px);font-weight:800;letter-spacing:-.03em;
 article h2{font-size:22px;font-weight:700;letter-spacing:-.02em;margin:38px 0 12px;text-transform:lowercase}
 article p{color:#374151;margin:0 0 16px}
 article .lead{font-size:17px;color:var(--muted)}
-article ul{color:#374151;padding-left:20px;margin:0 0 16px}
+article ul,article ol{color:#374151;padding-left:22px;margin:0 0 16px}
 article li{margin:6px 0}
+article h3{font-size:16px;font-weight:700;letter-spacing:-.01em;margin:24px 0 8px;text-transform:lowercase}
 article strong{color:var(--ink);font-weight:700}
+article .updated{color:var(--muted);font-size:12.5px;margin-top:-4px}
+.table-scroll{overflow-x:auto;margin:8px 0 24px;-webkit-overflow-scrolling:touch}
+.table-scroll .cmp{min-width:760px;margin:0}
 
 .cmp{width:100%;border-collapse:separate;border-spacing:0;border:1px solid var(--line);
   border-radius:var(--radius);overflow:hidden;background:var(--card);font-size:13.5px;margin:8px 0 24px}

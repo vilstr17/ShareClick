@@ -6,8 +6,8 @@ questions.
 ## What it is
 ShareClick is a **free, open-source software KVM**: it shares one keyboard,
 mouse, clipboard and files between a Mac and a Windows PC over the local network.
-No KVM hardware, no cloud, no account. Encrypted end-to-end and built for the
-lowest input lag (~6 µs transport overhead). Menu-bar app on macOS, system tray
+No KVM hardware, no cloud, no account. Encrypted end-to-end with a low-latency
+UDP input path (~6 µs measured loopback transport overhead). Menu-bar app on macOS, system tray
 on Windows.
 
 ## Category & positioning
@@ -40,7 +40,8 @@ on Windows.
 ## Differentiators
 - Free & open source (MIT / Apache-2.0), no license for any number of machines.
 - Encrypted by default (X25519 + ChaCha20-Poly1305), authenticated by a PSK.
-- Lowest input lag focus (UDP input path, ~6 µs transport, per-tick coalescing).
+- Low input lag focus (UDP input path, ~6 µs measured loopback transport,
+  per-tick coalescing).
 - Clipboard text + images, file transfer, automatic edge switching, mDNS
   discovery (no IPs to type).
 
@@ -49,7 +50,9 @@ on Windows.
 - Repo: https://github.com/phun333/ShareClick
 - X / Twitter: https://x.com/wiredaddict (handle @wiredaddict)
 - Comparison pages live: /vs-synergy.html, /vs-sharemouse.html, /vs-barrier.html
+- Alternatives hub: /synergy-alternatives.html
 - Setup guide: /how-to-share-mouse-keyboard-mac-windows.html
+- Clipboard guide: /share-clipboard-between-mac-and-windows.html
 - OG image: /og.png (1200×630)
 - License: MIT / Apache-2.0. Pricing = Free (no pricing page; "free" counts).
 
@@ -61,4 +64,5 @@ on Windows.
 ## Constraints / tone
 - Honest, factual, no hype, no fake reviews/ratings, no keyword stuffing.
 - Minimal, monospace, black/white + one blue accent visual brand.
-- LAN-only, privacy-first (no tracking/analytics on the site).
+- The product is LAN-only and has no account or product telemetry. The marketing
+  site uses privacy-friendly Umami pageview and release-click analytics.

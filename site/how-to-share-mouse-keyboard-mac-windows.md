@@ -33,8 +33,58 @@ Slide the cursor into the shared screen edge — your keyboard and mouse now dri
 the other computer. Push back to return. Copy on one machine and paste on the
 other; the **clipboard syncs automatically**, and you can send files too.
 
+## What ShareClick shares
+
+| Capability | Behavior |
+|---|---|
+| Mouse and keyboard | Control crosses when the pointer reaches the configured screen edge |
+| Clipboard text | Copy and paste in both directions |
+| Clipboard images | Synchronized between macOS and Windows |
+| Files | Transferred over the encrypted reliable channel |
+| Video/display | Not shared; each computer continues using its own monitor |
+
+If clipboard sharing is your main requirement, see the dedicated guide to
+[sharing a clipboard between Mac and Windows](https://phun333.github.io/ShareClick/share-clipboard-between-mac-and-windows.md).
+
+## Common setup problems
+
+### The computers cannot find each other
+
+Confirm that both computers are on the same local network. Guest Wi-Fi often
+blocks devices from reaching each other. On Windows, check that the firewall
+rule allows ShareClick. Wired Ethernet also works and can make network
+troubleshooting simpler.
+
+### The Mac does not accept remote input
+
+Reopen System Settings, check Accessibility and Input Monitoring, then restart
+ShareClick. macOS permissions are attached to the installed application, so
+moving or replacing the app can require approval again.
+
+### The cursor crosses on the wrong side
+
+Open the monitor arrangement and place the Mac and Windows display in the same
+physical order as the desk. The shared edge in the layout determines where the
+pointer leaves and where it appears.
+
+### Clipboard or files do not arrive
+
+First confirm that mouse control is connected. Test clipboard sync with a short
+line of plain text before trying an image or application-specific format.
+Clipboard changes made while disconnected are not queued for later delivery.
+
+## Software KVM or hardware KVM?
+
+ShareClick is a [software KVM](https://phun333.github.io/ShareClick/what-is-a-software-kvm.md):
+it shares input over the LAN while every computer keeps its own display. A
+hardware KVM physically switches a keyboard, mouse and monitor between
+computers. Use hardware when one monitor must display several machines or when
+you need BIOS-level control. Use software when both screens stay visible and you
+want seamless pointer, clipboard and file movement.
+
 That's it. One keyboard, one mouse, one clipboard across your Mac and Windows PC —
 **encrypted, low-latency, and free**.
 
 - [Download ShareClick (free)](https://github.com/phun333/ShareClick/releases)
+- [Synergy alternatives compared](https://phun333.github.io/ShareClick/synergy-alternatives.md)
 - [Back to home](https://phun333.github.io/ShareClick/index.md)

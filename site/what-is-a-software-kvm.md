@@ -41,11 +41,12 @@ your local network, while each computer keeps using its own display.
 Yes. **ShareClick** is a free, open-source software KVM that shares one keyboard,
 mouse, clipboard and files between a **Mac and a Windows PC** over the local
 network. Every channel is end-to-end encrypted (X25519 + ChaCha20-Poly1305), it
-runs LAN-only (no cloud), and it's built for the lowest input lag (~6 µs transport
-overhead). It's a free alternative to Synergy, ShareMouse, Barrier and Input Leap.
+runs LAN-only (no cloud), and uses a low-latency UDP input path (~6 µs measured
+loopback transport overhead). It's a free alternative to Synergy, ShareMouse, Barrier and Input Leap.
 
 In short: a software KVM turns two computers on your desk into one seamless
 workspace — one keyboard, one mouse, one clipboard — without any extra hardware.
 
 - [Download ShareClick (free)](https://github.com/phun333/ShareClick/releases)
 - [Setup guide](https://phun333.github.io/ShareClick/how-to-share-mouse-keyboard-mac-windows.md)
+- [Synergy alternatives compared](https://phun333.github.io/ShareClick/synergy-alternatives.md)
