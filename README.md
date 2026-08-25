@@ -20,6 +20,12 @@ LAN, end-to-end encrypted, with the lowest input lag we can squeeze out.
 
 ---
 
+> **Development status:** ShareClick is under active development and may not
+> work reliably on every macOS and Windows setup. If you try it, please
+> [report bugs](https://github.com/phun333/ShareClick/issues/new?template=bug_report.yml),
+> [suggest improvements](https://github.com/phun333/ShareClick/issues/new?template=feature_request.yml), or
+> [contribute a fix](./CONTRIBUTING.md).
+
 A free **alternative to Synergy, ShareMouse, Barrier and Input Leap**, the
 Mac-capable answer to **Mouse Without Borders**, and effectively **Universal
 Control for Windows**.
@@ -45,10 +51,11 @@ scoop install https://raw.githubusercontent.com/phun333/ShareClick/main/packagin
 Or grab the installer from the [**Releases**](https://github.com/phun333/ShareClick/releases) page.
 
 > **Note:** builds are **unsigned** (no paid Apple/Microsoft certificate), so your OS
-> shows a one-time warning. It's safe and easy to get past — see the
-> [installation docs](https://shareclick.mintlify.app/installation).
+> shows a one-time warning. Follow the
+> [installation docs](https://shareclick.mintlify.app/installation) to review and
+> allow the app.
 
-## Use it in 60 seconds
+## Try ShareClick
 
 On **both** machines: open ShareClick (menu-bar on macOS, system tray on
 Windows) → **Settings & Monitor Manager** → set the **same passphrase** and your

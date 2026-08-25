@@ -42,7 +42,14 @@ All notable changes to ShareClick are documented here. The format is based on
 - **Automatic remote screen size** — the client reports its resolution on connect
   (like Deskflow's DINF), so the arrangement window shows the real size.
 
+### Changed
+- **Development status and contribution guidance** — the website, README, and
+  documentation now explain that compatibility may vary during active
+  development and link to bug reports, feedback, and pull requests. GitHub issue
+  forms now ask only for the details needed to start triage.
+
 ### Fixed
+- mDNS advertisements now include the stable device ID used to identify peers.
 - Stuck modifier keys (Ctrl/Alt "Alt+Tab" bug) after a control hand-off — all
   modifiers are now released on every switch.
 - Windows: hide the stray console window when launched as the tray app.

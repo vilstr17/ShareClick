@@ -79,7 +79,8 @@ submitted for inclusion in this project by you, as defined in the
 Apache-2.0 license, shall be dual-licensed as above, without any additional
 terms or conditions.
 
-## Questions?
+## Questions and feedback
 
-Open a [Discussion](https://github.com/phun333/ShareClick/discussions) — issues
-are reserved for confirmed bugs and planned features.
+Open an [issue](https://github.com/phun333/ShareClick/issues/new/choose) and give
+us enough context to help. Bug reports and improvement ideas are welcome while
+ShareClick is under active development.

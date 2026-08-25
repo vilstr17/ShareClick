@@ -52,6 +52,11 @@ h1{font-size:clamp(72px,15vw,180px);font-weight:800;letter-spacing:-.045em;line-
 @media (hover:hover) and (pointer:fine){.btn.ghost:hover{box-shadow:0 6px 20px -8px rgba(17,17,17,.2)}}
 .btn svg{width:17px;height:17px}
 .sub{text-align:center;color:var(--muted);font-size:12.5px;margin:14px 0 0}
+.dev-status{display:flex;align-items:flex-start;gap:18px;max-width:680px;margin:28px auto 0;
+  padding:16px 18px;border:1px solid var(--line-strong);border-radius:var(--radius);
+  background:var(--card);text-align:left;font-size:12.5px;line-height:1.5}
+.dev-status b{color:var(--ink);white-space:nowrap;text-transform:lowercase}
+.dev-status span{color:var(--muted)}
 
 .facts{display:flex;gap:14px;justify-content:center;align-items:center;flex-wrap:wrap;
   margin:40px 0 0;color:var(--muted);font-size:13px}
@@ -124,28 +129,31 @@ footer a:hover{color:var(--ink)}
 
 /* ── entrance animations (staggered, ease-out, transform+opacity only) ─ */
 @keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
-.hero h1,.hero .tag,.hero .cta,.hero .sub,.hero .facts,.feat > div{
+.hero h1,.hero .tag,.hero .cta,.hero .sub,.hero .dev-status,.hero .facts,.feat > div{
   opacity:0;animation:rise .6s var(--ease-out) forwards}
 .hero h1{animation-delay:.02s}
 .hero .tag{animation-delay:.10s}
 .hero .cta{animation-delay:.18s}
 .hero .sub{animation-delay:.24s}
-.hero .facts{animation-delay:.30s}
-.feat > div:nth-child(1){animation-delay:.36s}
-.feat > div:nth-child(2){animation-delay:.40s}
-.feat > div:nth-child(3){animation-delay:.44s}
-.feat > div:nth-child(4){animation-delay:.48s}
-.feat > div:nth-child(5){animation-delay:.52s}
-.feat > div:nth-child(6){animation-delay:.56s}
+.hero .dev-status{animation-delay:.30s}
+.hero .facts{animation-delay:.36s}
+.feat > div:nth-child(1){animation-delay:.42s}
+.feat > div:nth-child(2){animation-delay:.46s}
+.feat > div:nth-child(3){animation-delay:.50s}
+.feat > div:nth-child(4){animation-delay:.54s}
+.feat > div:nth-child(5){animation-delay:.58s}
+.feat > div:nth-child(6){animation-delay:.62s}
 
 /* respect reduced motion — keep gentle fades, drop movement */
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;
     transition-duration:.01ms!important;scroll-behavior:auto!important}
-  .hero h1,.hero .tag,.hero .cta,.hero .sub,.hero .facts,.feat > div{opacity:1;transform:none}
+  .hero h1,.hero .tag,.hero .cta,.hero .sub,.hero .dev-status,.hero .facts,.feat > div{opacity:1;transform:none}
 }
 
 @media(max-width:680px){
+  .dev-status{display:block;text-align:center}
+  .dev-status b{display:block;margin-bottom:5px}
   .feat{grid-template-columns:1fr}
   .feat div{border-right:none}
   .feat div:nth-last-child(-n+3){border-bottom:1px solid var(--line)}

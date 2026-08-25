@@ -15,6 +15,13 @@ Input Leap, with a low-latency UDP input path (~6 µs measured loopback transpor
 - **Download:** https://github.com/phun333/ShareClick/releases
 - **Source:** https://github.com/phun333/ShareClick
 
+## Development status
+
+ShareClick is under active development and may not work reliably on every macOS
+and Windows setup. If you try it, please [report bugs](https://github.com/phun333/ShareClick/issues/new?template=bug_report.yml),
+[suggest improvements](https://github.com/phun333/ShareClick/issues/new?template=feature_request.yml), or
+[contribute a fix](https://github.com/phun333/ShareClick/blob/main/CONTRIBUTING.md).
+
 ## Features
 
 - Share one keyboard and mouse across Mac and Windows
@@ -28,28 +35,26 @@ Input Leap, with a low-latency UDP input path (~6 µs measured loopback transpor
 ## FAQ
 
 **What is ShareClick?**
-ShareClick is a free, open-source software KVM. It lets one keyboard and mouse
-control both a Mac and a Windows PC over your local network, with clipboard and
-file sharing built in. Everything is end-to-end encrypted and runs LAN-only — no
-hardware, no cloud, no account.
+ShareClick is a free, open-source software KVM for controlling a Mac and a
+Windows PC with one keyboard and mouse over your local network. It is under
+active development, so reliability may vary by setup.
 
 **Is ShareClick free?**
 Yes. It is completely free and open source (MIT / Apache-2.0). No account, no
 subscription, no cloud.
 
 **Does it share a mouse and keyboard between Mac and Windows?**
-Yes. ShareClick is a software KVM: one keyboard and mouse control both your Mac
-and Windows PC over the local network. Move the cursor to a screen edge to switch
-machines.
+That is what ShareClick is built to do. Current builds let one keyboard and
+mouse control a Mac and a Windows PC over the local network, but compatibility
+may vary during development.
 
 **Is ShareClick a free alternative to Synergy and ShareMouse?**
-Yes. It does what paid tools like Synergy and ShareMouse do — input sharing,
-clipboard sync and file transfer — but it is free, open source, and built for
-lower input lag.
+ShareClick is being developed as a free, open-source alternative with input
+sharing, clipboard sync, file transfer, and a focus on lower input lag.
 
 **Does it sync the clipboard and transfer files?**
-Yes. The clipboard (text and images) syncs automatically, and you can send files
-straight across the encrypted connection.
+Current builds include clipboard sync for text and images plus encrypted file
+transfer. These features may not work reliably on every setup yet.
 
 **Is it secure and does it need the internet?**
 It runs on your local network only — no cloud. Every channel is end-to-end
