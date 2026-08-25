@@ -29,7 +29,7 @@ pub fn advertise(name: &str, port: u16, id: &str) -> anyhow::Result<Advertiser> 
         &host_name,
         "",
         port,
-        &[] as &[(&str, &str)],
+        &[("id", id)] as &[(&str, &str)],
     )?
     .enable_addr_auto();
     daemon.register(info)?;
