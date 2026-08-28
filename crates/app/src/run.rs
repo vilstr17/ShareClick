@@ -438,6 +438,10 @@ fn run_peer_input(
     mut peer: Option<SocketAddr>,
 ) -> anyhow::Result<()> {
     let control = &sh.control;
+    // Fresh session: no peer is attached yet. Edge crossings / hotkey pushes
+    // stay disabled until the first packet from the peer proves it is live
+    // (otherwise the local cursor would be hidden with nowhere to go).
+    control.peer_connected.store(false, Ordering::Relaxed);
     let mut injector = crate::emit::Injector::new()?;
     let mut prev_my_away = false;
     let mut idle_ticks: u32 = 0;
@@ -465,6 +469,7 @@ fn run_peer_input(
             if peer != Some(from) {
                 tracing::info!(%from, "peer input channel online");
                 peer = Some(from);
+                control.peer_connected.store(true, Ordering::Relaxed);
             }
             match pkt.msg {
                 InputMsg::Ping { nonce, echo_nanos } => {

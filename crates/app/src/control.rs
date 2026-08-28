@@ -40,6 +40,12 @@ pub struct Control {
     /// edge before a return-crossing is allowed — otherwise it bounces straight
     /// back out (jitter/ping-pong at the border).
     pub host_armed: AtomicBool,
+    /// A peer input session is actually up (we received its packets). Edge
+    /// crossings and hotkey pushes must be ignored while this is false —
+    /// otherwise the local cursor gets hidden with nowhere to go and the
+    /// machine looks like it "lost" the mouse (no peer => nothing can bring
+    /// the pointer home automatically).
+    pub peer_connected: AtomicBool,
 }
 
 impl Control {
@@ -52,6 +58,7 @@ impl Control {
             send_peer_home: Mutex::new(None),
             host_span: Mutex::new(None),
             host_armed: AtomicBool::new(false),
+            peer_connected: AtomicBool::new(false),
         }
     }
 }

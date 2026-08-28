@@ -7,6 +7,15 @@ All notable changes to ShareClick are documented here. The format is based on
 
 ## [Unreleased]
 
+### Fixed
+- **Lost mouse with no peer** — edge crossings and the hotkey push are now
+  ignored until a peer input session is actually live (`peer_connected` gate).
+  Previously touching a bordered edge with no peer connected hid the local
+  cursor and parked it with nowhere to go: the pointer "disappeared" on macOS
+  and the physical mouse was silently swallowed on Windows until the process
+  was killed. With the gate, the cursor simply stays on the home screen and
+  the push hotkey logs a warning instead of hiding input.
+
 ### Added
 - **Privacy-friendly website analytics** — Umami pageview tracking across the
   GitHub Pages site, with separate release-page click events for macOS, Windows,

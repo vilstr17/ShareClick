@@ -168,11 +168,15 @@ pub fn run(
             control.peer_away.store(false, Ordering::Relaxed);
             *control.send_peer_home.lock().unwrap() = Some(i32::MAX); // MAX = centre
             tracing::info!("visiting pointer sent home (hotkey)");
-        } else {
+        } else if control.peer_connected.load(Ordering::Relaxed) {
             // Push my pointer to the peer (no edge → enter at their centre).
             *control.entry.lock().unwrap() = None;
             control.my_away.store(true, Ordering::Relaxed);
             tracing::info!("pointer pushed to peer (hotkey)");
+        } else {
+            // No peer attached: pushing the pointer away would hide the local
+            // cursor with nowhere to go — the "lost mouse" bug. Refuse.
+            tracing::warn!("hotkey push ignored: no peer connected");
         }
     };
 
@@ -253,7 +257,7 @@ pub fn run(
                             *control.send_peer_home.lock().unwrap() = Some(perp);
                             tracing::info!(?edge, perp, "visiting pointer crossed home");
                         }
-                    } else {
+                    } else if control.peer_connected.load(Ordering::Relaxed) {
                         // My pointer leaves — only where the two screens overlap.
                         let peer = *peer_screen.lock().unwrap();
                         let (this_dim, other_dim) = match edge {
