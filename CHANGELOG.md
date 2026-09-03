@@ -7,6 +7,8 @@ All notable changes to ShareClick are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-09-03
+
 ### Fixed
 - **Lost mouse with no peer** — edge crossings and the hotkey push are now
   ignored until a peer input session is actually live (`peer_connected` gate).
@@ -104,5 +106,6 @@ First release. A complete, low-latency, open-source software KVM.
 - Builds are unsigned (Gatekeeper/SmartScreen prompt on first launch).
 - One client at a time; no sliding-window UDP anti-replay yet.
 
-[Unreleased]: https://github.com/phun333/ShareClick/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/phun333/ShareClick/releases/tag/v0.1.0
+[Unreleased]: https://github.com/vilstr17/ShareClick/compare/v0.1.2...HEAD
+[0.1.2]: https://github.com/vilstr17/ShareClick/releases/tag/v0.1.2
+[0.1.0]: https://github.com/vilstr17/ShareClick/releases/tag/v0.1.0
