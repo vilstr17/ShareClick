@@ -26,6 +26,11 @@ LAN, end-to-end encrypted, with the lowest input lag we can squeeze out.
 > [suggest improvements](https://github.com/phun333/ShareClick/issues/new?template=feature_request.yml), or
 > [contribute a fix](./CONTRIBUTING.md).
 
+> **Personal fork:** This public repository is my version of ShareClick, based
+> on the original [phun333/ShareClick](https://github.com/phun333/ShareClick)
+> project. I was not able to successfully pair my devices, so pairing
+> reliability remains an open issue in this fork.
+
 A free **alternative to Synergy, ShareMouse, Barrier and Input Leap**, the
 Mac-capable answer to **Mouse Without Borders**, and effectively **Universal
 Control for Windows**.

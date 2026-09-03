@@ -17,6 +17,9 @@ All notable changes to ShareClick are documented here. The format is based on
   the push hotkey logs a warning instead of hiding input.
 
 ### Added
+- **Personal fork note** — README now identifies this repository as Vilém
+  Štrait's version of ShareClick and records the unresolved device-pairing
+  issue.
 - **Live pairing status in the tray and Settings** — the menu and settings
   window now show setup, discovery, connected, disconnected, and error states,
   the known peer identity, and the next action to take. New configurations use

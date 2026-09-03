@@ -305,11 +305,7 @@ pub fn pair() -> anyhow::Result<()> {
                     .map(|(_, addr, _)| *addr)
                     .collect();
                 for addr in candidates {
-                    status::peer_found(
-                        peer.clone(),
-                        Some(peer_id.clone()),
-                        addr.to_string(),
-                    );
+                    status::peer_found(peer.clone(), Some(peer_id.clone()), addr.to_string());
                     tracing::info!(%peer, %addr, "peer discovered — dialing");
                     if let Err(error) = connect(Some(&addr.to_string())) {
                         tracing::warn!(%addr, %error, "candidate connection ended");
@@ -452,9 +448,7 @@ fn serve_bulk(
                 refresh,
             }) => {
                 if version != shareclick_protocol::PROTOCOL_VERSION {
-                    anyhow::bail!(
-                        "peer protocol changed during the session: {version}"
-                    );
+                    anyhow::bail!("peer protocol changed during the session: {version}");
                 }
                 status::peer_identified(name.clone(), Some(device_id));
                 tracing::info!(peer = %name, width = screen.0, height = screen.1, "peer reported its screen size (Hello)");
@@ -716,11 +710,7 @@ pub fn serve(bind: &str) -> anyhow::Result<()> {
     serve_listener(listener, bind_addr, cfg)
 }
 
-fn serve_listener(
-    listener: TcpListener,
-    bind_addr: SocketAddr,
-    cfg: Config,
-) -> anyhow::Result<()> {
+fn serve_listener(listener: TcpListener, bind_addr: SocketAddr, cfg: Config) -> anyhow::Result<()> {
     let psk = cfg.psk.clone().into_bytes();
     tracing::info!(%bind_addr, name = %cfg.name, "listening; both machines' mice/keyboards work — push through the shared edge");
     tracing::info!("grant Accessibility permission on macOS for capture to work");
@@ -786,7 +776,9 @@ fn serve_listener(
         udp.set_read_timeout(Some(Duration::from_millis(1)))?;
         if let Err(e) = run_peer_input(&udp, &rx, &sh, &cfg.name, None) {
             tracing::warn!(error = %e, "input session ended; awaiting a new peer");
-            status::disconnected(format!("Connection ended: {e}. Waiting for the peer to reconnect."));
+            status::disconnected(format!(
+                "Connection ended: {e}. Waiting for the peer to reconnect."
+            ));
         }
         status::pairing("Previous connection ended. Listening for the peer to reconnect.");
     }

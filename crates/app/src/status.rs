@@ -12,6 +12,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::config::Config;
 
+#[cfg(any(feature = "tray", feature = "gui"))]
 const STALE_AFTER: Duration = Duration::from_secs(8);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -191,6 +192,7 @@ fn start_heartbeat() {
     });
 }
 
+#[cfg(any(feature = "tray", feature = "gui"))]
 pub fn snapshot() -> PairingSnapshot {
     let config_result = Config::load(&Config::default_path());
     if let Err(error) = config_result {
