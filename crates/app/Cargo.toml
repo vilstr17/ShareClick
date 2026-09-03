@@ -46,5 +46,7 @@ winresource = "0.1"
 [features]
 default = ["native"]
 native = ["dep:enigo", "dep:rdev", "dep:arboard", "dep:mdns-sd"]
-tray = ["native", "dep:tray-icon", "dep:tao"]
+# A tray build always exposes the visual Settings entry, so include the settings
+# window rather than falling back to a raw config file at runtime.
+tray = ["native", "dep:tray-icon", "dep:tao", "gui"]
 gui = ["native", "dep:eframe"]

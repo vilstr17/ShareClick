@@ -9,6 +9,7 @@ mod config;
 mod control;
 mod edge;
 mod filexfer;
+mod status;
 mod transport;
 
 #[cfg(feature = "native")]

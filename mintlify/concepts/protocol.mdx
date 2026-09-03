@@ -78,7 +78,9 @@ forcing a huge allocation).
 
 ```rust
 enum BulkMsg {
-    Hello { version: u16, name: String, screen: (u32,u32) },  // reserved
+    Hello { version: u16, device_id: String, name: String,
+            screen: (u32,u32), edge: Option<Edge>, offset: i32,
+            refresh: bool },
     Welcome { version: u16, name: String },                   // reserved
     Clipboard(ClipboardData),
     FileBegin { id: u64, name: String, size: u64 },

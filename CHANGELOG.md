@@ -17,6 +17,11 @@ All notable changes to ShareClick are documented here. The format is based on
   the push hotkey logs a warning instead of hiding input.
 
 ### Added
+- **Live pairing status in the tray and Settings** — the menu and settings
+  window now show setup, discovery, connected, disconnected, and error states,
+  the known peer identity, and the next action to take. New configurations use
+  the local computer name instead of assuming platform-specific machine names.
+  The tray build now always includes that Settings window.
 - **Privacy-friendly website analytics** — Umami pageview tracking across the
   GitHub Pages site, with separate release-page click events for macOS, Windows,
   guides, and comparison pages.

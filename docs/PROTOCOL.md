@@ -4,7 +4,7 @@ All types live in `crates/protocol/src/lib.rs`. Encoding is
 [postcard](https://docs.rs/postcard) — a compact, `serde`-based binary format
 chosen because it is small and fast (important on the input hot path).
 
-**Versioning:** `PROTOCOL_VERSION` (currently `1`). Bump it on any breaking wire
+**Versioning:** `PROTOCOL_VERSION` (currently `6`). Bump it on any breaking wire
 change and document the change here. The handshake exchanges versions so peers
 can refuse mismatches in the future.
 
@@ -58,6 +58,11 @@ Unmappable keys become `Key::Unknown(u32)` and are dropped on injection.
 
 ## Bulk channel
 
+After X25519 key agreement, both peers exchange an encrypted `Welcome` record
+containing `PROTOCOL_VERSION`. Decrypting that record proves that both sides used
+the same pairing code; its version is checked before either side reports the
+session as authenticated.
+
 ### Framing
 Each frame is `u32` big-endian length prefix + the (optionally encrypted)
 postcard bytes. Max frame size is 64 MiB (guards against a hostile peer forcing
@@ -66,7 +71,9 @@ a huge allocation).
 ### `BulkMsg`
 ```
 enum BulkMsg {
-    Hello { version: u16, name: String, screen: (u32,u32) },  // reserved
+    Hello { version: u16, device_id: String, name: String,
+            screen: (u32,u32), edge: Option<Edge>, offset: i32,
+            refresh: bool },
     Welcome { version: u16, name: String },                   // reserved
     Clipboard(ClipboardData),
     FileBegin { id: u64, name: String, size: u64 },

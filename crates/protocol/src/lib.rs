@@ -13,7 +13,7 @@ use serde::{Deserialize, Serialize};
 pub mod crypto;
 
 /// Protocol version. Bump on breaking wire changes.
-pub const PROTOCOL_VERSION: u16 = 5;
+pub const PROTOCOL_VERSION: u16 = 6;
 
 /// Screen edge a cursor can cross to hand control to a neighbour.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -196,6 +196,8 @@ pub enum BulkMsg {
     /// configure the layout on ONE machine.
     Hello {
         version: u16,
+        /// Stable generated identity. Display names can change or collide.
+        device_id: String,
         name: String,
         screen: (u32, u32),
         edge: Option<Edge>,

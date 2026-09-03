@@ -9,6 +9,7 @@
 use eframe::egui;
 
 use crate::config::{Config, Machine};
+use crate::status::{self, PairingPhase, PairingSnapshot};
 
 /// A memorable, auto-generated pairing code — the user never has to invent a
 /// passphrase. Strong enough for a LAN PSK (≥ 64 bits of entropy).
@@ -41,6 +42,69 @@ fn generate_code() -> String {
         words[(next() % 20) as usize],
         next() % 10000
     )
+}
+
+/// A local starting label for a newly created configuration. It is only a
+/// display name: the runtime pairs devices using their generated device IDs.
+fn suggested_machine_name() -> String {
+    ["COMPUTERNAME", "HOSTNAME"]
+        .into_iter()
+        .find_map(|key| std::env::var(key).ok())
+        .filter(|name| !name.trim().is_empty())
+        .unwrap_or_else(|| "This computer".into())
+}
+
+/// Copy and colour for the current pairing state. Kept separate from egui so
+/// the state vocabulary remains consistent between the settings window and
+/// the menu-bar menu.
+fn pairing_presentation(snapshot: &PairingSnapshot) -> (&'static str, String, egui::Color32) {
+    let peer = snapshot
+        .peer_name
+        .as_deref()
+        .unwrap_or("the other computer");
+    let fallback = match snapshot.phase {
+        PairingPhase::NeedsSetup => {
+            "Save a pairing code and the other computer's name, then open ShareClick on both computers."
+        }
+        PairingPhase::Pairing => {
+            "Keep ShareClick open on both computers. They need the same pairing code and local network."
+        }
+        PairingPhase::Connected => {
+            "Encrypted pairing is active. You can now arrange the screens and move the pointer across their shared edge."
+        }
+        PairingPhase::Disconnected => {
+            "Keep ShareClick open on both computers. It will continue looking for the saved peer."
+        }
+        PairingPhase::Error => {
+            "Check that both computers use the same pairing code and can reach the same local network."
+        }
+    };
+    let title = match snapshot.phase {
+        PairingPhase::NeedsSetup => "Setup required",
+        PairingPhase::Pairing => "Looking for the other computer",
+        PairingPhase::Connected => "Paired and connected",
+        PairingPhase::Disconnected => "Peer disconnected",
+        PairingPhase::Error => "Pairing needs attention",
+    };
+    let detail = match snapshot.phase {
+        PairingPhase::Pairing => format!(
+            "Looking for {peer}. {}",
+            snapshot.detail.as_deref().unwrap_or(fallback)
+        ),
+        PairingPhase::Connected => format!(
+            "Connected to {peer}. {}",
+            snapshot.detail.as_deref().unwrap_or(fallback)
+        ),
+        _ => snapshot.detail.clone().unwrap_or_else(|| fallback.into()),
+    };
+    let colour = match snapshot.phase {
+        PairingPhase::Connected => egui::Color32::from_rgb(0x20, 0x7a, 0x45),
+        PairingPhase::Error => egui::Color32::from_rgb(0xa8, 0x3b, 0x32),
+        PairingPhase::NeedsSetup | PairingPhase::Pairing | PairingPhase::Disconnected => {
+            egui::Color32::from_rgb(0x2b, 0x7a, 0xff)
+        }
+    };
+    (title, detail, colour)
 }
 
 /// Distance between the two monitor centres along the shared edge (canvas px).
@@ -292,7 +356,7 @@ impl SettingsApp {
                     .iter()
                     .map(|m| m.name.clone())
                     .find(|n| n != &this)
-                    .unwrap_or_else(|| "windows".into());
+                    .unwrap_or_else(|| "Other computer".into());
                 let side = c
                     .machine(&this)
                     .map(|m| {
@@ -325,8 +389,8 @@ impl SettingsApp {
                 )
             }
             None => (
-                "mac".into(),
-                "windows".into(),
+                suggested_machine_name(),
+                "Other computer".into(),
                 Side::Right,
                 (1920, 1080),
                 generate_code(),
@@ -404,9 +468,17 @@ impl SettingsApp {
 
 impl eframe::App for SettingsApp {
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        // Pairing happens on a background thread. Poll the lightweight shared
+        // snapshot so this window stays truthful without owning networking.
+        ctx.request_repaint_after(std::time::Duration::from_secs(1));
+        let pairing = status::snapshot();
+
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.heading("ShareClick settings");
             ui.add_space(6.0);
+
+            self.pairing_status(ui, &pairing);
+            ui.add_space(12.0);
 
             egui::Grid::new("fields").num_columns(2).spacing([12.0, 8.0]).show(ui, |ui| {
                 ui.label("Pairing code");
@@ -416,11 +488,11 @@ impl eframe::App for SettingsApp {
                             .password(!self.show_psk)
                             .desired_width(220.0),
                     );
-                    let eye = if self.show_psk { "\u{1F441} hide" } else { "\u{1F441} view" };
-                    if ui.button(eye).clicked() {
+                    let visibility = if self.show_psk { "Hide" } else { "Show" };
+                    if ui.button(visibility).clicked() {
                         self.show_psk = !self.show_psk;
                     }
-                    if ui.button("\u{21BB} new").clicked() {
+                    if ui.button("Generate new").clicked() {
                         self.psk = generate_code();
                     }
                 });
@@ -434,8 +506,11 @@ impl eframe::App for SettingsApp {
                 ui.label("Other machine name");
                 ui.text_edit_singleline(&mut self.other_name);
                 ui.end_row();
-                ui.label("Server host (client only)");
-                ui.add(egui::TextEdit::singleline(&mut self.server_host).hint_text("blank = auto-discover"));
+                ui.label("Manual host override");
+                ui.add(
+                    egui::TextEdit::singleline(&mut self.server_host)
+                        .hint_text("leave blank for automatic pairing"),
+                );
                 ui.end_row();
                 // Resolutions are never typed by hand: this machine is detected
                 // live, and the other machine reports its size on connect (like
@@ -466,11 +541,11 @@ impl eframe::App for SettingsApp {
             } else {
                 ui.add_space(6.0);
                 ui.group(|ui| {
-                    ui.label("\u{1F517}  Connect the two machines first");
+                    ui.label("Connect the two machines first");
                     ui.label(
                         egui::RichText::new(
-                            "Press Start on both machines (same pairing code). Once they've met, \
-                             the real screen sizes are known and the arrangement unlocks here.",
+                            "Save the same pairing code on both computers and keep ShareClick open. \
+                             Once they meet, the real screen sizes are known and the arrangement unlocks here.",
                         )
                         .size(12.0),
                     );
@@ -501,6 +576,34 @@ impl eframe::App for SettingsApp {
 }
 
 impl SettingsApp {
+    fn pairing_status(&self, ui: &mut egui::Ui, snapshot: &PairingSnapshot) {
+        let (title, detail, colour) = pairing_presentation(snapshot);
+        ui.group(|ui| {
+            ui.set_min_width(ui.available_width());
+            ui.horizontal(|ui| {
+                ui.colored_label(colour, egui::RichText::new(title).strong());
+                if let Some(name) = &snapshot.peer_name {
+                    ui.label(format!("Peer: {name}"));
+                }
+            });
+            ui.label(detail);
+            if let Some(id) = &snapshot.peer_id {
+                ui.label(
+                    egui::RichText::new(format!("Peer identity: {id}"))
+                        .size(11.0)
+                        .color(egui::Color32::from_gray(110)),
+                );
+            }
+            if let Some(address) = &snapshot.peer_address {
+                ui.label(
+                    egui::RichText::new(format!("Network address: {address}"))
+                        .size(11.0)
+                        .color(egui::Color32::from_gray(110)),
+                );
+            }
+        });
+    }
+
     fn arrangement(&mut self, ui: &mut egui::Ui) {
         let (canvas, _) = ui.allocate_exact_size(egui::vec2(500.0, 280.0), egui::Sense::hover());
         let painter = ui.painter_at(canvas);

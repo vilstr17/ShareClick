@@ -9,7 +9,7 @@ use std::net::TcpStream;
 use std::sync::Arc;
 
 use shareclick_protocol::crypto::{Handshake, Role, Session};
-use shareclick_protocol::BulkMsg;
+use shareclick_protocol::{BulkMsg, PROTOCOL_VERSION};
 
 /// Max frame size we will accept, to avoid unbounded allocations from a peer.
 const MAX_FRAME: u32 = 64 * 1024 * 1024; // 64 MiB
@@ -44,6 +44,8 @@ impl BulkConn {
     /// and [`Role::Responder`] on the accepting side.
     pub fn handshake(stream: TcpStream, psk: &[u8], role: Role) -> anyhow::Result<(Self, Session)> {
         stream.set_nodelay(true)?;
+        stream.set_read_timeout(Some(std::time::Duration::from_secs(5)))?;
+        stream.set_write_timeout(Some(std::time::Duration::from_secs(5)))?;
         let mut stream = stream;
         let hs = Handshake::new();
         let ours = hs.public_bytes();
@@ -55,24 +57,43 @@ impl BulkConn {
         let (input, bulk) = hs
             .complete_bundle(theirs, psk, role)
             .map_err(|e| anyhow::anyhow!("handshake failed: {e}"))?;
-        let conn = Self {
+        let mut conn = Self {
             stream,
             cipher: Some(Arc::new(bulk)),
             send_ctr: 0,
             recv_ctr: 0,
         };
+
+        // Key derivation alone cannot prove that both peers used the same PSK:
+        // with a wrong code both sides still derive keys, just different ones.
+        // Exchange a first encrypted record and validate it before reporting an
+        // authenticated connection. This also rejects incompatible protocols
+        // before input capture starts.
+        conn.send(&BulkMsg::Welcome {
+            version: PROTOCOL_VERSION,
+            name: String::new(),
+        })?;
+        match conn.recv()? {
+            BulkMsg::Welcome { version, .. } if version == PROTOCOL_VERSION => {}
+            BulkMsg::Welcome { version, .. } => anyhow::bail!(
+                "incompatible protocol version: peer uses {version}, this build uses {PROTOCOL_VERSION}"
+            ),
+            _ => anyhow::bail!("invalid encrypted handshake confirmation"),
+        }
+        conn.stream.set_read_timeout(None)?;
+        conn.stream.set_write_timeout(None)?;
         Ok((conn, input))
     }
 
-    /// Clone into an independent handle sharing the same cipher. Counters reset
-    /// to 0: the clone is used for a single direction (all reads *or* all
-    /// writes), matching the peer's counter for that direction.
+    /// Clone into an independent handle sharing the same cipher. Each clone is
+    /// used for a single direction (all reads or all writes), preserving the
+    /// counters already consumed by the encrypted handshake confirmation.
     pub fn try_clone(&self) -> std::io::Result<Self> {
         Ok(Self {
             stream: self.stream.try_clone()?,
             cipher: self.cipher.clone(),
-            send_ctr: 0,
-            recv_ctr: 0,
+            send_ctr: self.send_ctr,
+            recv_ctr: self.recv_ctr,
         })
     }
 
@@ -184,5 +205,23 @@ mod tests {
             assert_eq!(&client.recv().unwrap(), m);
         }
         server.join().unwrap();
+    }
+
+    #[test]
+    fn encrypted_handshake_rejects_a_different_pairing_code() {
+        let listener = TcpListener::bind("127.0.0.1:0").unwrap();
+        let addr = listener.local_addr().unwrap();
+        let server = std::thread::spawn(move || {
+            let (stream, _) = listener.accept().unwrap();
+            BulkConn::handshake(stream, b"server-pairing-code", Role::Responder).is_err()
+        });
+
+        let client = BulkConn::handshake(
+            TcpStream::connect(addr).unwrap(),
+            b"different-client-code",
+            Role::Initiator,
+        );
+        assert!(client.is_err());
+        assert!(server.join().unwrap());
     }
 }

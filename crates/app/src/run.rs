@@ -12,7 +12,7 @@
 #![cfg(feature = "native")]
 
 use std::net::{SocketAddr, TcpListener, TcpStream, ToSocketAddrs};
-use std::sync::atomic::Ordering;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::{self, Receiver};
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
@@ -104,6 +104,7 @@ use crate::control::Control;
 use crate::discovery;
 use crate::edge::{client_return_span, entry_point, map_to_client, perp_dim, EdgeConfig};
 use crate::filexfer::FileReceiver;
+use crate::status;
 use crate::transport::InputChannel;
 
 /// Everything one symmetric peer session shares between the capture thread,
@@ -124,6 +125,10 @@ struct Shared {
     /// Outgoing bulk-channel sender (set once the bulk thread is up) — lets the
     /// pump push a refreshed Hello when the user re-arranges mid-session.
     hello_tx: Arc<Mutex<Option<mpsc::Sender<BulkMsg>>>>,
+    /// Cleared by the bulk reader when the authenticated TCP session closes so
+    /// the UDP pump can return and pairing can reconnect cleanly.
+    session_alive: Arc<AtomicBool>,
+    device_id: String,
 }
 
 /// Build the shared state from the local config (arrangement may be absent —
@@ -168,6 +173,11 @@ fn build_shared(cfg: &Config) -> Shared {
         peer_screen: Arc::new(Mutex::new(peer_screen)),
         screen: (sw, sh),
         hello_tx: Arc::new(Mutex::new(None)),
+        session_alive: Arc::new(AtomicBool::new(false)),
+        device_id: cfg
+            .device_id
+            .clone()
+            .unwrap_or_else(|| Config::ensure_device_id(&Config::default_path())),
     }
 }
 
@@ -176,6 +186,7 @@ fn build_shared(cfg: &Config) -> Shared {
 fn my_hello(cfg_name: &str, sh: &Shared, refresh: bool) -> BulkMsg {
     BulkMsg::Hello {
         version: shareclick_protocol::PROTOCOL_VERSION,
+        device_id: sh.device_id.clone(),
         name: cfg_name.to_string(),
         screen: sh.screen,
         edge: *sh.border.lock().unwrap(),
@@ -235,49 +246,96 @@ fn resolve(addr: &str) -> anyhow::Result<SocketAddr> {
 /// the server is up, so start order doesn't matter.
 #[cfg(feature = "native")]
 pub fn pair() -> anyhow::Result<()> {
-    let cfg = load_config()?;
+    let cfg = match load_config() {
+        Ok(cfg) => cfg,
+        Err(error) => {
+            status::needs_setup(error.to_string());
+            return Err(error);
+        }
+    };
     let me = cfg.name.clone();
     let port = cfg.port;
 
-    // Listen + advertise IMMEDIATELY (serve does both) — so even if WE can't
-    // see the peer (its mDNS blocked by a firewall), the peer can still find
-    // and dial US. Browsing below only decides whether WE should dial.
-    {
-        let bind = format!("0.0.0.0:{port}");
-        std::thread::spawn(move || {
-            if let Err(e) = serve(&bind) {
-                tracing::warn!(error = %e, "listener stopped");
-            }
-        });
-    }
+    // Claim the port before reporting that pairing started. This also prevents
+    // a tray opened alongside the login service from starting a second pairing
+    // loop that would compete for the same peer.
+    let bind_addr = resolve(&format!("0.0.0.0:{port}"))?;
+    let listener = TcpListener::bind(bind_addr).map_err(|error| {
+        if error.kind() == std::io::ErrorKind::AddrInUse {
+            anyhow::anyhow!(
+                "ShareClick is already listening on port {port}; another instance is probably running"
+            )
+        } else {
+            anyhow::anyhow!("cannot listen on {bind_addr}: {error}")
+        }
+    })?;
+    let listener_cfg = cfg.clone();
+    std::thread::spawn(move || {
+        if let Err(error) = serve_listener(listener, bind_addr, listener_cfg) {
+            status::error(format!("Pairing listener stopped: {error}"));
+            tracing::warn!(%error, "listener stopped");
+        }
+    });
+    status::pairing("Listening on the local network and looking for another ShareClick device.");
     tracing::info!(name = %me, "auto-pairing: listening, advertising and searching…");
 
     let my_id = Config::ensure_device_id(&Config::default_path());
     loop {
-        let peers = discovery::list(Duration::from_secs(2)).unwrap_or_default();
+        let peers = match discovery::list(Duration::from_secs(2)) {
+            Ok(peers) => peers,
+            Err(error) => {
+                status::error(format!("Local network discovery failed: {error}"));
+                tracing::warn!(%error, "mDNS discovery failed; retrying");
+                std::thread::sleep(Duration::from_secs(2));
+                continue;
+            }
+        };
         // Identity = stable device id (never the name; names can collide or be
         // renamed to "mac (2)" by mDNS). Skip ourselves by id.
-        if let Some((fullname, addr, pid)) = peers
-            .into_iter()
-            .find(|(_, _, pid)| !pid.is_empty() && *pid != my_id)
+        if let Some((fullname, _, peer_id)) = peers
+            .iter()
+            .find(|(_, _, id)| !id.is_empty() && id.as_str() != my_id)
         {
             let peer = fullname.split('.').next().unwrap_or("peer").to_string();
             // Deterministic tiebreaker on the ids: exactly one side dials.
-            if my_id > pid {
-                tracing::info!(%peer, %addr, "paired — dialing");
-                loop {
-                    if let Err(e) = connect(Some(&addr.to_string())) {
-                        tracing::warn!(error = %e, "connect failed; retrying in 2s");
-                        std::thread::sleep(Duration::from_secs(2));
+            if my_id > *peer_id {
+                let candidates: Vec<_> = peers
+                    .iter()
+                    .filter(|(_, _, id)| id == peer_id)
+                    .map(|(_, addr, _)| *addr)
+                    .collect();
+                for addr in candidates {
+                    status::peer_found(
+                        peer.clone(),
+                        Some(peer_id.clone()),
+                        addr.to_string(),
+                    );
+                    tracing::info!(%peer, %addr, "peer discovered — dialing");
+                    if let Err(error) = connect(Some(&addr.to_string())) {
+                        tracing::warn!(%addr, %error, "candidate connection ended");
+                        status::pairing(format!(
+                            "Could not connect through {addr}. Trying another discovered address."
+                        ));
                     }
                 }
+                status::pairing(
+                    "Peer is visible but no advertised address connected. Retrying discovery.",
+                );
+                std::thread::sleep(Duration::from_secs(2));
+                continue;
             }
-            tracing::info!(%peer, "paired — the peer will connect to us");
-            loop {
-                std::thread::sleep(Duration::from_secs(3600));
-            }
+            status::peer_found(
+                peer.clone(),
+                Some(peer_id.clone()),
+                "incoming connection".into(),
+            );
+            tracing::info!(%peer, "peer discovered — waiting for its incoming connection");
+        } else {
+            status::pairing(
+                "Listening on the local network. Open ShareClick on the other computer with the same pairing code.",
+            );
+            tracing::info!("no peer found yet; still searching… (the peer may still find US)");
         }
-        tracing::info!("no peer found yet; still searching… (the peer may still find US)");
     }
 }
 
@@ -385,13 +443,20 @@ fn serve_bulk(
             // adopt the mirrored version so the layout is only ever configured
             // on ONE machine.
             Ok(BulkMsg::Hello {
+                version,
+                device_id,
                 name,
                 screen,
                 edge,
                 offset,
                 refresh,
-                ..
             }) => {
+                if version != shareclick_protocol::PROTOCOL_VERSION {
+                    anyhow::bail!(
+                        "peer protocol changed during the session: {version}"
+                    );
+                }
+                status::peer_identified(name.clone(), Some(device_id));
                 tracing::info!(peer = %name, width = screen.0, height = screen.1, "peer reported its screen size (Hello)");
                 *sh.peer_screen.lock().unwrap() = screen;
                 record_peer_screen(&name, screen);
@@ -422,7 +487,7 @@ fn serve_bulk(
                 }
             }
             Ok(_) => {}
-            Err(_) => return Ok(()),
+            Err(error) => return Err(error),
         }
     }
 }
@@ -442,6 +507,9 @@ fn run_peer_input(
     // stay disabled until the first packet from the peer proves it is live
     // (otherwise the local cursor would be hidden with nowhere to go).
     control.peer_connected.store(false, Ordering::Relaxed);
+    let waiting_since = std::time::Instant::now();
+    let mut last_peer_packet = waiting_since;
+    let mut input_confirmed = false;
     let mut injector = crate::emit::Injector::new()?;
     let mut prev_my_away = false;
     let mut idle_ticks: u32 = 0;
@@ -451,6 +519,10 @@ fn run_peer_input(
     let mut cfg_ticks: u32 = 0;
     let mut buf = [0u8; 2048];
     loop {
+        if !sh.session_alive.load(Ordering::Relaxed) {
+            control.peer_connected.store(false, Ordering::Relaxed);
+            anyhow::bail!("authenticated bulk channel closed");
+        }
         // "Connect first, arrange after": watch the config; when the settings
         // window saves, reload the arrangement live + push it to the peer.
         cfg_ticks += 1;
@@ -466,10 +538,15 @@ fn run_peer_input(
         }
         // ---- receive from the peer ----
         if let Ok(Some((pkt, from))) = udp.recv(&mut buf) {
+            last_peer_packet = std::time::Instant::now();
             if peer != Some(from) {
                 tracing::info!(%from, "peer input channel online");
                 peer = Some(from);
                 control.peer_connected.store(true, Ordering::Relaxed);
+            }
+            if !input_confirmed {
+                input_confirmed = true;
+                status::connected(from.to_string());
             }
             match pkt.msg {
                 InputMsg::Ping { nonce, echo_nanos } => {
@@ -516,6 +593,15 @@ fn run_peer_input(
                 }
             }
         } else {
+            let timeout_from = if input_confirmed {
+                last_peer_packet
+            } else {
+                waiting_since
+            };
+            if timeout_from.elapsed() > Duration::from_secs(6) {
+                control.peer_connected.store(false, Ordering::Relaxed);
+                anyhow::bail!("peer input channel timed out");
+            }
             // Idle keep-alive so the path stays warm and the peer learns our
             // address (the dialer pings first; NAT/firewall state stays open).
             idle_ticks += 1;
@@ -617,9 +703,25 @@ fn run_peer_input(
 /// Listener peer: accepts the connection. At runtime both sides are identical
 /// (symmetric ShareMouse-style control) — "server" only means "listens".
 pub fn serve(bind: &str) -> anyhow::Result<()> {
-    let cfg = load_config()?;
-    let psk = cfg.psk.clone().into_bytes();
+    let cfg = match load_config() {
+        Ok(cfg) => cfg,
+        Err(error) => {
+            status::needs_setup(error.to_string());
+            return Err(error);
+        }
+    };
     let bind_addr = resolve(bind)?;
+    let listener = TcpListener::bind(bind_addr)?;
+    status::pairing("Listening for another ShareClick device on the local network.");
+    serve_listener(listener, bind_addr, cfg)
+}
+
+fn serve_listener(
+    listener: TcpListener,
+    bind_addr: SocketAddr,
+    cfg: Config,
+) -> anyhow::Result<()> {
+    let psk = cfg.psk.clone().into_bytes();
     tracing::info!(%bind_addr, name = %cfg.name, "listening; both machines' mice/keyboards work — push through the shared edge");
     tracing::info!("grant Accessibility permission on macOS for capture to work");
 
@@ -645,21 +747,26 @@ pub fn serve(bind: &str) -> anyhow::Result<()> {
         .map_err(|e| tracing::warn!(error = %e, "mDNS advertise failed"))
         .ok();
 
-    let listener = TcpListener::bind(bind_addr)?;
     loop {
-        let (stream, _) = listener.accept()?;
+        let (stream, remote_addr) = listener.accept()?;
         let peer_ip = stream
             .peer_addr()
             .map(|a| a.ip().to_string())
             .unwrap_or_default();
+        status::authenticating(remote_addr.to_string());
         let (conn, input_sess) = match BulkConn::handshake(stream, &psk, Role::Responder) {
             Ok(v) => v,
             Err(e) => {
                 tracing::warn!(%peer_ip, error = %e, "handshake/auth failed; check the PSK");
+                status::error(format!(
+                    "Could not authenticate {remote_addr}. Check that both computers use the same pairing code."
+                ));
                 continue;
             }
         };
         tracing::info!(%peer_ip, "peer authenticated (encrypted session established)");
+        status::pairing("Peer authenticated. Verifying the encrypted input channel.");
+        sh.session_alive.store(true, Ordering::Relaxed);
 
         // Bulk channel: clipboard/files + Hello exchange (we send ours too, so
         // the dialer can adopt our arrangement).
@@ -667,7 +774,11 @@ pub fn serve(bind: &str) -> anyhow::Result<()> {
         let sh_bulk = sh.clone();
         std::thread::spawn(move || {
             // Listener only adopts the peer's layout when it has none itself.
-            let _ = serve_bulk(conn, Some(hello), sh_bulk, false);
+            let result = serve_bulk(conn, Some(hello), sh_bulk.clone(), false);
+            sh_bulk.session_alive.store(false, Ordering::Relaxed);
+            if let Err(error) = result {
+                tracing::warn!(%error, "bulk channel closed");
+            }
         });
 
         // Encrypted UDP input channel for this session.
@@ -675,14 +786,22 @@ pub fn serve(bind: &str) -> anyhow::Result<()> {
         udp.set_read_timeout(Some(Duration::from_millis(1)))?;
         if let Err(e) = run_peer_input(&udp, &rx, &sh, &cfg.name, None) {
             tracing::warn!(error = %e, "input session ended; awaiting a new peer");
+            status::disconnected(format!("Connection ended: {e}. Waiting for the peer to reconnect."));
         }
+        status::pairing("Previous connection ended. Listening for the peer to reconnect.");
     }
 }
 
 /// Client: receives input batches and injects them locally. `server` overrides
 /// the config's `server_host`; either may omit the port (config `port` used).
 pub fn connect(server: Option<&str>) -> anyhow::Result<()> {
-    let cfg = load_config()?;
+    let cfg = match load_config() {
+        Ok(cfg) => cfg,
+        Err(error) => {
+            status::needs_setup(error.to_string());
+            return Err(error);
+        }
+    };
     let psk = cfg.psk.clone().into_bytes();
     let with_port = |h: &str| -> String {
         if h.contains(':') {
@@ -704,14 +823,17 @@ pub fn connect(server: Option<&str>) -> anyhow::Result<()> {
         }
     };
     tracing::info!(%server_addr, name = %cfg.name, "connecting; grant Accessibility permission on macOS");
+    status::authenticating(server_addr.to_string());
 
     // Handshake over TCP first, then key both channels from it.
-    let stream = TcpStream::connect(server_addr)?;
+    let stream = TcpStream::connect_timeout(&server_addr, Duration::from_secs(4))?;
     let (conn, input_sess): (BulkConn, Session) =
         BulkConn::handshake(stream, &psk, Role::Initiator)?;
     tracing::info!("authenticated with peer (encrypted session established)");
+    status::pairing("Peer authenticated. Verifying the encrypted input channel.");
 
     let sh = build_shared(&cfg);
+    sh.session_alive.store(true, Ordering::Relaxed);
 
     // SYMMETRIC: the dialer captures its own input too — both machines' mice
     // and keyboards work, whichever you grab (ShareMouse-style).
@@ -733,9 +855,10 @@ pub fn connect(server: Option<&str>) -> anyhow::Result<()> {
     let hello = my_hello(&cfg.name, &sh, false);
     let sh_bulk = sh.clone();
     std::thread::spawn(move || {
-        if let Err(e) = serve_bulk(conn, Some(hello), sh_bulk, true) {
+        if let Err(e) = serve_bulk(conn, Some(hello), sh_bulk.clone(), true) {
             tracing::warn!(error = %e, "bulk channel closed");
         }
+        sh_bulk.session_alive.store(false, Ordering::Relaxed);
     });
 
     // Encrypted UDP input channel; announce ourselves so the listener learns
@@ -748,5 +871,9 @@ pub fn connect(server: Option<&str>) -> anyhow::Result<()> {
         echo_nanos: 0,
     })?;
 
-    run_peer_input(&channel, &rx, &sh, &cfg.name, Some(server_addr))
+    let result = run_peer_input(&channel, &rx, &sh, &cfg.name, Some(server_addr));
+    if let Err(error) = &result {
+        status::disconnected(format!("Connection ended: {error}"));
+    }
+    result
 }

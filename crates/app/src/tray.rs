@@ -12,6 +12,7 @@
 #![cfg(feature = "tray")]
 
 use std::path::PathBuf;
+use std::time::{Duration, Instant};
 
 use tao::event::Event;
 use tao::event_loop::{ControlFlow, EventLoopBuilder};
@@ -19,6 +20,7 @@ use tray_icon::menu::{Menu, MenuEvent, MenuItem, PredefinedMenuItem};
 use tray_icon::{Icon, TrayIconBuilder};
 
 use crate::config::Config;
+use crate::status::{self, PairingPhase};
 
 /// Messages pumped into the tao event loop.
 enum UserEvent {
@@ -38,8 +40,9 @@ pub fn run() -> anyhow::Result<()> {
     }));
 
     // Menu items — ids captured so we can match clicks.
-    let item_status = MenuItem::new("ShareClick — idle", false, None);
-    let item_start = MenuItem::new("Start (find & connect the other PC)", true, None);
+    let item_status = MenuItem::new("ShareClick — starting…", false, None);
+    let item_detail = MenuItem::new("Preparing automatic pairing…", false, None);
+    let item_start = MenuItem::new("Start automatic pairing", true, None);
     let item_settings = MenuItem::new("Settings & Monitor Manager…", true, None);
     let item_quit = MenuItem::new("Quit ShareClick", true, None);
 
@@ -49,6 +52,7 @@ pub fn run() -> anyhow::Result<()> {
 
     let menu = Menu::new();
     menu.append(&item_status)?;
+    menu.append(&item_detail)?;
     menu.append(&PredefinedMenuItem::separator())?;
     menu.append(&item_start)?;
     menu.append(&PredefinedMenuItem::separator())?;
@@ -61,7 +65,6 @@ pub fn run() -> anyhow::Result<()> {
     // Start every login. Without a role, wait for a menu choice.
     // One button, one behaviour: auto-pair (role in the config only decides who
     // listens; control is symmetric either way). Starts immediately on launch.
-    item_status.set_text("ShareClick — pairing…");
     spawn_pair();
 
     // The tray icon must be created after the loop starts on macOS, so we build
@@ -70,7 +73,7 @@ pub fn run() -> anyhow::Result<()> {
     let menu_holder = menu;
 
     event_loop.run(move |event, _target, control_flow| {
-        *control_flow = ControlFlow::Wait;
+        *control_flow = ControlFlow::WaitUntil(Instant::now() + Duration::from_secs(1));
 
         match event {
             Event::NewEvents(tao::event::StartCause::Init) => {
@@ -92,15 +95,82 @@ pub fn run() -> anyhow::Result<()> {
                 if ev.id == id_quit {
                     *control_flow = ControlFlow::Exit;
                 } else if ev.id == id_start {
-                    item_status.set_text("ShareClick — pairing…");
-                    spawn_pair();
+                    match status::snapshot().phase {
+                        PairingPhase::NeedsSetup => open_settings(&config_path),
+                        PairingPhase::Pairing | PairingPhase::Connected => {}
+                        PairingPhase::Disconnected | PairingPhase::Error => spawn_pair(),
+                    }
                 } else if ev.id == id_settings {
                     open_settings(&config_path);
                 }
             }
+            Event::MainEventsCleared => {
+                refresh_pairing_menu(&item_status, &item_detail, &item_start);
+            }
             _ => {}
         }
     });
+}
+
+/// Render the shared runtime state into the constrained native menu API. The
+/// first line is deliberately short enough for a menu bar; the second line
+/// gives the user an immediate next action or peer identity.
+fn refresh_pairing_menu(status_item: &MenuItem, detail_item: &MenuItem, action: &MenuItem) {
+    let snapshot = status::snapshot();
+    let peer = snapshot.peer_name.as_deref().unwrap_or("other computer");
+    let menu_state: (String, String, String, bool) = match snapshot.phase {
+        PairingPhase::NeedsSetup => (
+            "ShareClick — setup required".into(),
+            snapshot.detail.unwrap_or_else(|| {
+                "Open Settings, save the same pairing code on both computers, then start pairing."
+                    .into()
+            }),
+            "Open Settings".into(),
+            true,
+        ),
+        PairingPhase::Pairing => (
+            format!("ShareClick — looking for {peer}"),
+            snapshot.detail.unwrap_or_else(|| {
+                "Automatic pairing is running. Keep ShareClick open on both computers.".into()
+            }),
+            "Pairing in progress".into(),
+            false,
+        ),
+        PairingPhase::Connected => {
+            let identity = snapshot
+                .peer_id
+                .map(|id| format!("Peer identity: {id}"))
+                .unwrap_or_else(|| format!("Connected to {peer}."));
+            (
+                format!("ShareClick — connected to {peer}"),
+                snapshot.detail.unwrap_or(identity),
+                "Connected".into(),
+                false,
+            )
+        }
+        PairingPhase::Disconnected => (
+            "ShareClick — peer disconnected".into(),
+            snapshot.detail.unwrap_or_else(|| {
+                format!("{peer} is no longer reachable. Retry after both computers are online.")
+            }),
+            "Retry automatic pairing".into(),
+            true,
+        ),
+        PairingPhase::Error => (
+            "ShareClick — pairing needs attention".into(),
+            snapshot.detail.unwrap_or_else(|| {
+                "Check the pairing code and that both computers are on the same local network."
+                    .into()
+            }),
+            "Retry automatic pairing".into(),
+            true,
+        ),
+    };
+    let (headline, detail, action_label, action_enabled) = menu_state;
+    status_item.set_text(headline);
+    detail_item.set_text(detail);
+    action.set_text(action_label);
+    action.set_enabled(action_enabled);
 }
 
 #[cfg(target_os = "macos")]
