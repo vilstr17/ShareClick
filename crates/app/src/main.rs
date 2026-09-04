@@ -116,6 +116,13 @@ fn hide_console_window() {
 }
 
 fn main() -> anyhow::Result<()> {
+    // rdev's Windows low-level mouse hook reports per-monitor-aware cursor
+    // coordinates. Set the process to the same DPI mode before tao or egui can
+    // create a window, otherwise a 150% display can report a 1920px cursor
+    // against a virtualized 1280px screen width and trigger an early crossing.
+    #[cfg(all(windows, feature = "native"))]
+    let _ = enigo::set_dpi_awareness();
+
     tracing_subscriber::fmt()
         .with_env_filter(
             tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| "info".into()),

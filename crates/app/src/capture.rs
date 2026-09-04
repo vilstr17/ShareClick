@@ -49,8 +49,6 @@ mod mac_cursor {
     extern "C" {
         fn CGMainDisplayID() -> u32;
         fn CGWarpMouseCursorPosition(p: CGPoint) -> i32;
-        fn CGEventCreate(source: *const c_void) -> *const c_void;
-        fn CGEventGetLocation(event: *const c_void) -> CGPoint;
         fn CGDisplayHideCursor(display: u32) -> i32;
         fn CGDisplayShowCursor(display: u32) -> i32;
         fn CGAssociateMouseAndMouseCursorPosition(connected: bool) -> i32;
@@ -82,18 +80,6 @@ mod mac_cursor {
     pub fn warp_to(x: f64, y: f64) {
         unsafe {
             CGWarpMouseCursorPosition(CGPoint { x, y });
-        }
-    }
-    /// The ACTUAL current cursor position (not a stale event location). This is
-    /// what makes the warp-to-centre delta scheme stable (Deskflow does the same).
-    pub fn current_pos() -> (f64, f64) {
-        unsafe {
-            let e = CGEventCreate(std::ptr::null());
-            let p = CGEventGetLocation(e);
-            if !e.is_null() {
-                CFRelease(e);
-            }
-            (p.x, p.y)
         }
     }
     fn set_bg_cursor_property() {
@@ -307,19 +293,16 @@ pub fn run(
                 let ev = {
                     let mut lp = last_pos.lock().unwrap();
                     if is_active {
-                        let _ = (x, y); // event position is stale; we query live
-                                        // Deskflow technique: read the LIVE cursor position, warp
-                                        // it back to centre every move, and forward the delta.
-                                        // The warp only takes effect because we RETURN the
-                                        // mouse-move event below (never suppress it on macOS).
-                        let (mx, my) = mac_cursor::current_pos();
-                        let (px, py) = (*lp).unwrap_or((mx, my));
-                        let dx = (mx - px).round() as i32;
-                        let dy = (my - py).round() as i32;
+                        // rdev exposes the location carried by this CGEvent.
+                        // Use it directly: querying a newly-created event here
+                        // can lag one event behind the tap and makes movement
+                        // feel sticky. Re-centering keeps future deltas usable.
+                        let (px, py) = (*lp).unwrap_or((x, y));
+                        let dx = (x - px).round() as i32;
+                        let dy = (y - py).round() as i32;
                         // Skip no-motion and the post-warp "already at centre" event.
-                        if (dx == 0 && dy == 0) || ((mx - cx).abs() < 1.0 && (my - cy).abs() < 1.0)
-                        {
-                            *lp = Some((mx, my));
+                        if (dx == 0 && dy == 0) || ((x - cx).abs() < 1.0 && (y - cy).abs() < 1.0) {
+                            *lp = Some((x, y));
                             None
                         } else {
                             mac_cursor::warp_to(cx, cy);
@@ -378,22 +361,10 @@ pub fn run(
             if let Some(ev) = mapped {
                 let _ = tx.send(ev);
             }
-            // macOS: mouse-move MUST pass through so the re-centre warp is
-            // honoured by the window server (Deskflow does the same); everything
-            // else (clicks, keys, scroll) is suppressed locally. On other
-            // platforms rdev suppresses cleanly, so we drop everything.
-            #[cfg(target_os = "macos")]
-            {
-                if matches!(event.event_type, EventType::MouseMove { .. }) {
-                    Some(event)
-                } else {
-                    None
-                }
-            }
-            #[cfg(not(target_os = "macos"))]
-            {
-                None
-            }
+            // Swallow every local event while away. Passing macOS mouse-move
+            // events through makes hidden movement continue to hover local UI,
+            // even though clicks and keys are being sent to the peer.
+            None
         } else {
             Some(event) // let this machine handle it normally
         }

@@ -11,12 +11,38 @@ use crate::keymap;
 
 /// Query the main display size (width, height) in the OS coordinate space.
 pub fn main_display_size() -> anyhow::Result<(u32, u32)> {
-    let enigo = Enigo::new(&Settings::default())
-        .map_err(|e| anyhow::anyhow!("failed to init display query: {e:?}"))?;
-    let (w, h) = enigo
-        .main_display()
-        .map_err(|e| anyhow::anyhow!("main_display: {e:?}"))?;
-    Ok((w.max(1) as u32, h.max(1) as u32))
+    // CGEvent mouse locations are expressed in the global display coordinate
+    // space. On Retina displays that is measured in logical points, while
+    // Enigo's `pixels_wide` result is the backing-pixel size (usually 2x).
+    // Edge detection and cursor warps must use the event coordinate space.
+    #[cfg(target_os = "macos")]
+    {
+        let display = core_graphics::display::CGDisplay::main();
+        let (width, height) = display
+            .display_mode()
+            .map(|mode| (mode.width() as u32, mode.height() as u32))
+            .unwrap_or_else(|| {
+                let bounds = display.bounds();
+                (
+                    bounds.size.width.round().max(0.0) as u32,
+                    bounds.size.height.round().max(0.0) as u32,
+                )
+            });
+        if width == 0 || height == 0 {
+            anyhow::bail!("CoreGraphics did not report a main display size");
+        }
+        Ok((width, height))
+    }
+
+    #[cfg(not(target_os = "macos"))]
+    {
+        let enigo = Enigo::new(&Settings::default())
+            .map_err(|e| anyhow::anyhow!("failed to init display query: {e:?}"))?;
+        let (w, h) = enigo
+            .main_display()
+            .map_err(|e| anyhow::anyhow!("main_display: {e:?}"))?;
+        Ok((w.max(1) as u32, h.max(1) as u32))
+    }
 }
 
 pub struct Injector {

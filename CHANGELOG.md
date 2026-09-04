@@ -7,6 +7,24 @@ All notable changes to ShareClick are documented here. The format is based on
 
 ## [Unreleased]
 
+## [0.1.3] - 2026-09-04
+
+### Fixed
+- macOS no longer polls AppKit's pasteboard from reconnecting worker threads;
+  clipboard access is serialized on the tray's main event loop to prevent the
+  intermittent native crash seen during long sessions.
+- Automatic pairing now installs one global input capture hook per process and
+  reuses it across reconnects. The dialer previously also started a listener
+  hook, causing Windows mouse events to be processed twice.
+- macOS edge detection and cursor parking now use logical display coordinates
+  on Retina screens, and Windows selects per-monitor DPI awareness before any
+  UI is created. Cursor positions and screen bounds therefore use the same
+  coordinate system.
+- macOS suppresses hidden local mouse movement while the pointer is remote, so
+  local controls no longer continue reacting to hover. Captured mouse batches
+  are bounded and coalesced, essential pointer transitions are sent
+  redundantly, and a lost session always restores local control.
+
 ## [0.1.2] - 2026-09-03
 
 ### Fixed
@@ -106,6 +124,7 @@ First release. A complete, low-latency, open-source software KVM.
 - Builds are unsigned (Gatekeeper/SmartScreen prompt on first launch).
 - One client at a time; no sliding-window UDP anti-replay yet.
 
-[Unreleased]: https://github.com/vilstr17/ShareClick/compare/v0.1.2...HEAD
+[Unreleased]: https://github.com/vilstr17/ShareClick/compare/v0.1.3...HEAD
+[0.1.3]: https://github.com/vilstr17/ShareClick/releases/tag/v0.1.3
 [0.1.2]: https://github.com/vilstr17/ShareClick/releases/tag/v0.1.2
 [0.1.0]: https://github.com/vilstr17/ShareClick/releases/tag/v0.1.0

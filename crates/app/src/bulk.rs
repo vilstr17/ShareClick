@@ -97,6 +97,12 @@ impl BulkConn {
         })
     }
 
+    /// Clone only the underlying socket so a session owner can shut it down
+    /// and unblock the bulk reader when the UDP input side has failed.
+    pub fn shutdown_handle(&self) -> std::io::Result<TcpStream> {
+        self.stream.try_clone()
+    }
+
     pub fn send(&mut self, msg: &BulkMsg) -> anyhow::Result<()> {
         let body = msg.encode()?;
         let payload = match &self.cipher {

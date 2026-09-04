@@ -71,9 +71,10 @@ pub fn run() -> anyhow::Result<()> {
     // it lazily on the first `Init` event and keep it alive here (RAII).
     let mut _tray = None;
     let menu_holder = menu;
+    let mut next_status_refresh = Instant::now();
 
     event_loop.run(move |event, _target, control_flow| {
-        *control_flow = ControlFlow::WaitUntil(Instant::now() + Duration::from_secs(1));
+        *control_flow = ControlFlow::WaitUntil(Instant::now() + Duration::from_millis(250));
 
         match event {
             Event::NewEvents(tao::event::StartCause::Init) => {
@@ -105,7 +106,12 @@ pub fn run() -> anyhow::Result<()> {
                 }
             }
             Event::MainEventsCleared => {
-                refresh_pairing_menu(&item_status, &item_detail, &item_start);
+                #[cfg(target_os = "macos")]
+                crate::clipboard::poll_main_thread();
+                if Instant::now() >= next_status_refresh {
+                    refresh_pairing_menu(&item_status, &item_detail, &item_start);
+                    next_status_refresh = Instant::now() + Duration::from_secs(1);
+                }
             }
             _ => {}
         }

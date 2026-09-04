@@ -11,7 +11,7 @@
 
 #![cfg(feature = "native")]
 
-use std::net::{SocketAddr, TcpListener, TcpStream, ToSocketAddrs};
+use std::net::{Shutdown, SocketAddr, TcpListener, TcpStream, ToSocketAddrs};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc::{self, Receiver};
 use std::sync::{Arc, Mutex};
@@ -82,6 +82,46 @@ mod tests {
             entry_point(opposite(Edge::Bottom), 1440, 1920, 1080),
             (1440, 2)
         );
+    }
+
+    #[test]
+    fn input_batch_coalesces_motion_without_reordering_buttons() {
+        let (tx, rx) = mpsc::channel();
+        tx.send(InputEvent::MouseMove { dx: 2, dy: 3 }).unwrap();
+        tx.send(InputEvent::MouseMove { dx: 4, dy: -1 }).unwrap();
+        tx.send(InputEvent::MouseButton {
+            button: shareclick_protocol::MouseButton::Left,
+            pressed: true,
+        })
+        .unwrap();
+        tx.send(InputEvent::MouseMove { dx: -2, dy: 5 }).unwrap();
+
+        assert_eq!(
+            drain_input_batch(&rx),
+            vec![
+                InputEvent::MouseMove { dx: 6, dy: 2 },
+                InputEvent::MouseButton {
+                    button: shareclick_protocol::MouseButton::Left,
+                    pressed: true,
+                },
+                InputEvent::MouseMove { dx: -2, dy: 5 },
+            ]
+        );
+    }
+
+    #[test]
+    fn input_batch_is_bounded() {
+        let (tx, rx) = mpsc::channel();
+        for _ in 0..70 {
+            tx.send(InputEvent::Key {
+                key: shareclick_protocol::Key::A,
+                pressed: true,
+            })
+            .unwrap();
+        }
+
+        assert_eq!(drain_input_batch(&rx).len(), MAX_INPUT_EVENTS_PER_PACKET);
+        assert_eq!(drain_input_batch(&rx).len(), 6);
     }
 }
 
@@ -181,6 +221,21 @@ fn build_shared(cfg: &Config) -> Shared {
     }
 }
 
+/// Start the one process-wide capture loop used across peer reconnects.
+fn start_capture(sh: &Shared) -> Receiver<InputEvent> {
+    let (tx, rx) = mpsc::channel();
+    let c = sh.control.clone();
+    let arr = sh.arrangement.clone();
+    let ps = sh.peer_screen.clone();
+    let screen = sh.screen;
+    std::thread::spawn(move || {
+        if let Err(error) = capture::run(tx, c, arr, screen, ps) {
+            tracing::error!(%error, "capture thread stopped");
+        }
+    });
+    rx
+}
+
 /// My own Hello: name + screen + my arrangement (so a peer with none adopts it).
 /// `refresh` = the user just re-arranged; the peer must adopt unconditionally.
 fn my_hello(cfg_name: &str, sh: &Shared, refresh: bool) -> BulkMsg {
@@ -269,17 +324,13 @@ pub fn pair() -> anyhow::Result<()> {
             anyhow::anyhow!("cannot listen on {bind_addr}: {error}")
         }
     })?;
-    let listener_cfg = cfg.clone();
-    std::thread::spawn(move || {
-        if let Err(error) = serve_listener(listener, bind_addr, listener_cfg) {
-            status::error(format!("Pairing listener stopped: {error}"));
-            tracing::warn!(%error, "listener stopped");
-        }
-    });
     status::pairing("Listening on the local network and looking for another ShareClick device.");
     tracing::info!(name = %me, "auto-pairing: listening, advertising and searching…");
 
     let my_id = Config::ensure_device_id(&Config::default_path());
+    let advert = discovery::advertise(&cfg.name, bind_addr.port(), &my_id)
+        .map_err(|error| tracing::warn!(%error, "mDNS advertise failed"))
+        .ok();
     loop {
         let peers = match discovery::list(Duration::from_secs(2)) {
             Ok(peers) => peers,
@@ -299,26 +350,15 @@ pub fn pair() -> anyhow::Result<()> {
             let peer = fullname.split('.').next().unwrap_or("peer").to_string();
             // Deterministic tiebreaker on the ids: exactly one side dials.
             if my_id > *peer_id {
-                let candidates: Vec<_> = peers
-                    .iter()
-                    .filter(|(_, _, id)| id == peer_id)
-                    .map(|(_, addr, _)| *addr)
-                    .collect();
-                for addr in candidates {
-                    status::peer_found(peer.clone(), Some(peer_id.clone()), addr.to_string());
-                    tracing::info!(%peer, %addr, "peer discovered — dialing");
-                    if let Err(error) = connect(Some(&addr.to_string())) {
-                        tracing::warn!(%addr, %error, "candidate connection ended");
-                        status::pairing(format!(
-                            "Could not connect through {addr}. Trying another discovered address."
-                        ));
-                    }
-                }
-                status::pairing(
-                    "Peer is visible but no advertised address connected. Retrying discovery.",
-                );
-                std::thread::sleep(Duration::from_secs(2));
-                continue;
+                // The dialer must not also run `serve_listener`: both paths
+                // install a global input hook, so the old design processed
+                // every Windows mouse event twice. Keep this advertisement
+                // alive, release the listening socket, and reuse one capture
+                // runtime for all reconnect attempts.
+                drop(listener);
+                let sh = build_shared(&cfg);
+                let rx = start_capture(&sh);
+                return dial_discovered(&cfg, &my_id, peer_id, &sh, &rx, advert);
             }
             status::peer_found(
                 peer.clone(),
@@ -326,12 +366,59 @@ pub fn pair() -> anyhow::Result<()> {
                 "incoming connection".into(),
             );
             tracing::info!(%peer, "peer discovered — waiting for its incoming connection");
+            drop(advert);
+            return serve_listener(listener, bind_addr, cfg);
         } else {
             status::pairing(
                 "Listening on the local network. Open ShareClick on the other computer with the same pairing code.",
             );
             tracing::info!("no peer found yet; still searching… (the peer may still find US)");
         }
+    }
+}
+
+/// Re-discover and reconnect to the selected peer while keeping one capture
+/// loop and one shared control state for the lifetime of the process.
+fn dial_discovered(
+    cfg: &Config,
+    my_id: &str,
+    peer_id: &str,
+    sh: &Shared,
+    rx: &Receiver<InputEvent>,
+    _advert: Option<discovery::Advertiser>,
+) -> anyhow::Result<()> {
+    loop {
+        let peers = match discovery::list(Duration::from_secs(2)) {
+            Ok(peers) => peers,
+            Err(error) => {
+                status::error(format!("Local network discovery failed: {error}"));
+                tracing::warn!(%error, "mDNS discovery failed; retrying");
+                std::thread::sleep(Duration::from_secs(2));
+                continue;
+            }
+        };
+        let candidates: Vec<_> = peers
+            .iter()
+            .filter(|(_, _, id)| id == peer_id && id.as_str() != my_id)
+            .map(|(name, addr, id)| (name.clone(), *addr, id.clone()))
+            .collect();
+        if candidates.is_empty() {
+            status::pairing("The paired computer is offline. Waiting for it to reappear.");
+            std::thread::sleep(Duration::from_secs(2));
+            continue;
+        }
+        for (fullname, addr, id) in candidates {
+            let peer = fullname.split('.').next().unwrap_or("peer").to_string();
+            status::peer_found(peer.clone(), Some(id), addr.to_string());
+            tracing::info!(%peer, %addr, "peer discovered — dialing");
+            if let Err(error) = connect_session(cfg, addr, sh, rx) {
+                tracing::warn!(%addr, %error, "candidate connection ended");
+                status::disconnected(format!(
+                    "Connection to {peer} ended: {error}. Reconnecting automatically."
+                ));
+            }
+        }
+        std::thread::sleep(Duration::from_secs(1));
     }
 }
 
@@ -414,13 +501,11 @@ fn serve_bulk(
             }
         }
     });
-    let last_apply = last.clone();
-    std::thread::spawn(move || clipboard::apply(in_rx, last_apply));
-    std::thread::spawn(move || clipboard::watch(out_tx, last));
+    let _clipboard_sync = clipboard::start(out_tx, in_rx, last);
 
     let mut receiver = FileReceiver::new("received");
     let mut rconn = conn;
-    loop {
+    let result = loop {
         match rconn.recv() {
             Ok(BulkMsg::Clipboard(data)) => {
                 let _ = in_tx.send(data);
@@ -481,14 +566,75 @@ fn serve_bulk(
                 }
             }
             Ok(_) => {}
-            Err(error) => return Err(error),
+            Err(error) => break Err(error),
         }
-    }
+    };
+    // Release the last long-lived sender for this session so the bulk writer
+    // and clipboard worker can terminate before a reconnect installs new ones.
+    *sh.hello_tx.lock().unwrap() = None;
+    result
 }
 
 /// The SYMMETRIC input pump — identical on both machines. Injects the peer's
 /// forwarded input, forwards ours while our pointer is away, and translates
 /// capture-thread state flips into `PointerEnter` / `PointerEnd` messages.
+struct PeerInputGuard<'a> {
+    control: &'a Control,
+}
+
+impl Drop for PeerInputGuard<'_> {
+    fn drop(&mut self) {
+        self.control.peer_connected.store(false, Ordering::Release);
+        self.control.my_away.store(false, Ordering::Release);
+        self.control.peer_away.store(false, Ordering::Release);
+        self.control.host_armed.store(false, Ordering::Release);
+        *self.control.entry.lock().unwrap() = None;
+        *self.control.return_to.lock().unwrap() = None;
+        *self.control.send_peer_home.lock().unwrap() = None;
+        *self.control.host_span.lock().unwrap() = None;
+    }
+}
+
+/// Pointer ownership transitions are small but essential. UDP may lose an
+/// individual datagram, so send a few identical copies. The receiver treats
+/// repeated transitions idempotently.
+fn send_pointer_control(udp: &InputChannel, peer: SocketAddr, msg: InputMsg) {
+    for _ in 0..3 {
+        if let Err(error) = udp.send_to(msg.clone(), peer) {
+            tracing::warn!(%error, "failed to send pointer control transition");
+            break;
+        }
+    }
+}
+
+const MAX_INPUT_EVENTS_PER_PACKET: usize = 64;
+
+/// Drain one bounded UDP batch and fold consecutive motion events together.
+/// This prevents high-polling-rate mice from producing oversized datagrams
+/// that exceed the receiver's fixed buffer and are discarded as lag spikes.
+fn drain_input_batch(rx: &Receiver<InputEvent>) -> Vec<InputEvent> {
+    let mut batch = Vec::new();
+    while batch.len() < MAX_INPUT_EVENTS_PER_PACKET {
+        let Ok(event) = rx.try_recv() else {
+            break;
+        };
+        match (batch.last_mut(), event) {
+            (
+                Some(InputEvent::MouseMove {
+                    dx: last_dx,
+                    dy: last_dy,
+                }),
+                InputEvent::MouseMove { dx, dy },
+            ) => {
+                *last_dx = last_dx.saturating_add(dx);
+                *last_dy = last_dy.saturating_add(dy);
+            }
+            (_, event) => batch.push(event),
+        }
+    }
+    batch
+}
+
 fn run_peer_input(
     udp: &InputChannel,
     rx: &Receiver<InputEvent>,
@@ -501,12 +647,13 @@ fn run_peer_input(
     // stay disabled until the first packet from the peer proves it is live
     // (otherwise the local cursor would be hidden with nowhere to go).
     control.peer_connected.store(false, Ordering::Relaxed);
+    let _control_guard = PeerInputGuard { control };
     let waiting_since = std::time::Instant::now();
     let mut last_peer_packet = waiting_since;
     let mut input_confirmed = false;
     let mut injector = crate::emit::Injector::new()?;
     let mut prev_my_away = false;
-    let mut idle_ticks: u32 = 0;
+    let mut last_keepalive = std::time::Instant::now();
     let mut cfg_mtime = std::fs::metadata(Config::default_path())
         .and_then(|m| m.modified())
         .ok();
@@ -514,7 +661,6 @@ fn run_peer_input(
     let mut buf = [0u8; 2048];
     loop {
         if !sh.session_alive.load(Ordering::Relaxed) {
-            control.peer_connected.store(false, Ordering::Relaxed);
             anyhow::bail!("authenticated bulk channel closed");
         }
         // "Connect first, arrange after": watch the config; when the settings
@@ -533,10 +679,10 @@ fn run_peer_input(
         // ---- receive from the peer ----
         if let Ok(Some((pkt, from))) = udp.recv(&mut buf) {
             last_peer_packet = std::time::Instant::now();
+            control.peer_connected.store(true, Ordering::Release);
             if peer != Some(from) {
                 tracing::info!(%from, "peer input channel online");
                 peer = Some(from);
-                control.peer_connected.store(true, Ordering::Relaxed);
             }
             if !input_confirmed {
                 input_confirmed = true;
@@ -556,15 +702,18 @@ fn run_peer_input(
                 }
                 // The peer's pointer arrives on my screen.
                 InputMsg::PointerEnter { edge, pos, span } => {
-                    if control.my_away.swap(false, Ordering::Relaxed) {
-                        prev_my_away = false; // crossed paths: mine implicitly came home
+                    // Repeated copies of the same transition are expected.
+                    // Only the first may warp the cursor or disarm return.
+                    if !control.peer_away.swap(true, Ordering::AcqRel) {
+                        if control.my_away.swap(false, Ordering::Relaxed) {
+                            prev_my_away = false; // crossed paths: mine implicitly came home
+                        }
+                        control.host_armed.store(false, Ordering::Relaxed);
+                        *control.host_span.lock().unwrap() = Some((edge, span));
+                        let (ex, ey) = entry_point(edge, pos, sh.screen.0, sh.screen.1);
+                        let _ = injector.move_to(ex, ey);
+                        tracing::info!(?edge, ex, ey, "peer pointer entered my screen");
                     }
-                    control.peer_away.store(true, Ordering::Relaxed);
-                    control.host_armed.store(false, Ordering::Relaxed);
-                    *control.host_span.lock().unwrap() = Some((edge, span));
-                    let (ex, ey) = entry_point(edge, pos, sh.screen.0, sh.screen.1);
-                    let _ = injector.move_to(ex, ey);
-                    tracing::info!(?edge, ex, ey, "peer pointer entered my screen");
                 }
                 InputMsg::Pong { .. } => {}
                 // An away-state ends.
@@ -592,24 +741,23 @@ fn run_peer_input(
             } else {
                 waiting_since
             };
-            if timeout_from.elapsed() > Duration::from_secs(6) {
-                control.peer_connected.store(false, Ordering::Relaxed);
+            if timeout_from.elapsed() > Duration::from_secs(15) {
                 anyhow::bail!("peer input channel timed out");
             }
-            // Idle keep-alive so the path stays warm and the peer learns our
-            // address (the dialer pings first; NAT/firewall state stays open).
-            idle_ticks += 1;
-            if idle_ticks > 2000 {
-                idle_ticks = 0;
-                if let Some(p) = peer {
-                    let _ = udp.send_to(
-                        InputMsg::Ping {
-                            nonce: 0,
-                            echo_nanos: 0,
-                        },
-                        p,
-                    );
-                }
+        }
+
+        // Time-based keep-alive instead of loop-count timing. Scheduler load
+        // and input traffic can change loop frequency by orders of magnitude.
+        if last_keepalive.elapsed() >= Duration::from_secs(1) {
+            last_keepalive = std::time::Instant::now();
+            if let Some(p) = peer {
+                let _ = udp.send_to(
+                    InputMsg::Ping {
+                        nonce: 0,
+                        echo_nanos: 0,
+                    },
+                    p,
+                );
             }
         }
 
@@ -628,7 +776,7 @@ fn run_peer_input(
                         pos: Some(map_to_client(perp, offset, cdim)),
                     }
                 };
-                let _ = udp.send_to(msg, p);
+                send_pointer_control(udp, p, msg);
             }
             *control.host_span.lock().unwrap() = None;
         }
@@ -663,27 +811,25 @@ fn run_peer_input(
                             )
                         }
                     };
-                    let _ = udp.send_to(
+                    send_pointer_control(
+                        udp,
+                        p,
                         InputMsg::PointerEnter {
                             edge: opposite(edge_out),
                             pos,
                             span,
                         },
-                        p,
                     );
                 } else {
                     // Hotkey reclaim — tell the peer the visit ended.
-                    let _ = udp.send_to(InputMsg::PointerEnd { pos: None }, p);
+                    send_pointer_control(udp, p, InputMsg::PointerEnd { pos: None });
                 }
             }
             prev_my_away = my_away;
         }
 
         // ---- forward my captured input while my pointer is away ----
-        let mut batch = Vec::new();
-        while let Ok(ev) = rx.try_recv() {
-            batch.push(ev);
-        }
+        let batch = drain_input_batch(rx);
         if !batch.is_empty() {
             if let Some(p) = peer {
                 let _ = udp.send_to(InputMsg::Events(batch), p);
@@ -718,18 +864,7 @@ fn serve_listener(listener: TcpListener, bind_addr: SocketAddr, cfg: Config) -> 
     let sh = build_shared(&cfg);
 
     // Capture runs once, globally. Both peers capture their own input.
-    let (tx, rx) = mpsc::channel();
-    {
-        let c = sh.control.clone();
-        let arr = sh.arrangement.clone();
-        let ps = sh.peer_screen.clone();
-        let screen = sh.screen;
-        std::thread::spawn(move || {
-            if let Err(e) = capture::run(tx, c, arr, screen, ps) {
-                tracing::error!(error = %e, "capture thread stopped");
-            }
-        });
-    }
+    let rx = start_capture(&sh);
 
     // Advertise over mDNS so peers can find us without an IP.
     let my_id = Config::ensure_device_id(&Config::default_path());
@@ -754,18 +889,19 @@ fn serve_listener(listener: TcpListener, bind_addr: SocketAddr, cfg: Config) -> 
                 continue;
             }
         };
+        let shutdown = conn.shutdown_handle()?;
         tracing::info!(%peer_ip, "peer authenticated (encrypted session established)");
         status::pairing("Peer authenticated. Verifying the encrypted input channel.");
-        sh.session_alive.store(true, Ordering::Relaxed);
+        sh.session_alive.store(true, Ordering::Release);
 
         // Bulk channel: clipboard/files + Hello exchange (we send ours too, so
         // the dialer can adopt our arrangement).
         let hello = my_hello(&cfg.name, &sh, false);
         let sh_bulk = sh.clone();
-        std::thread::spawn(move || {
+        let bulk_thread = std::thread::spawn(move || {
             // Listener only adopts the peer's layout when it has none itself.
             let result = serve_bulk(conn, Some(hello), sh_bulk.clone(), false);
-            sh_bulk.session_alive.store(false, Ordering::Relaxed);
+            sh_bulk.session_alive.store(false, Ordering::Release);
             if let Err(error) = result {
                 tracing::warn!(%error, "bulk channel closed");
             }
@@ -780,6 +916,8 @@ fn serve_listener(listener: TcpListener, bind_addr: SocketAddr, cfg: Config) -> 
                 "Connection ended: {e}. Waiting for the peer to reconnect."
             ));
         }
+        let _ = shutdown.shutdown(Shutdown::Both);
+        let _ = bulk_thread.join();
         status::pairing("Previous connection ended. Listening for the peer to reconnect.");
     }
 }
@@ -794,7 +932,6 @@ pub fn connect(server: Option<&str>) -> anyhow::Result<()> {
             return Err(error);
         }
     };
-    let psk = cfg.psk.clone().into_bytes();
     let with_port = |h: &str| -> String {
         if h.contains(':') {
             h.to_string()
@@ -814,43 +951,45 @@ pub fn connect(server: Option<&str>) -> anyhow::Result<()> {
             })?
         }
     };
+    let sh = build_shared(&cfg);
+    let rx = start_capture(&sh);
+    let result = connect_session(&cfg, server_addr, &sh, &rx);
+    if let Err(error) = &result {
+        status::disconnected(format!("Connection ended: {error}"));
+    }
+    result
+}
+
+/// Establish one dialer session using an already-running capture loop. Keeping
+/// capture outside this function lets automatic reconnect reuse the same OS
+/// hook instead of installing another global hook on every attempt.
+fn connect_session(
+    cfg: &Config,
+    server_addr: SocketAddr,
+    sh: &Shared,
+    rx: &Receiver<InputEvent>,
+) -> anyhow::Result<()> {
     tracing::info!(%server_addr, name = %cfg.name, "connecting; grant Accessibility permission on macOS");
     status::authenticating(server_addr.to_string());
 
     // Handshake over TCP first, then key both channels from it.
     let stream = TcpStream::connect_timeout(&server_addr, Duration::from_secs(4))?;
     let (conn, input_sess): (BulkConn, Session) =
-        BulkConn::handshake(stream, &psk, Role::Initiator)?;
+        BulkConn::handshake(stream, cfg.psk.as_bytes(), Role::Initiator)?;
+    let shutdown = conn.shutdown_handle()?;
     tracing::info!("authenticated with peer (encrypted session established)");
     status::pairing("Peer authenticated. Verifying the encrypted input channel.");
-
-    let sh = build_shared(&cfg);
-    sh.session_alive.store(true, Ordering::Relaxed);
-
-    // SYMMETRIC: the dialer captures its own input too — both machines' mice
-    // and keyboards work, whichever you grab (ShareMouse-style).
-    let (tx, rx) = mpsc::channel();
-    {
-        let c = sh.control.clone();
-        let arr = sh.arrangement.clone();
-        let ps = sh.peer_screen.clone();
-        let screen = sh.screen;
-        std::thread::spawn(move || {
-            if let Err(e) = capture::run(tx, c, arr, screen, ps) {
-                tracing::error!(error = %e, "capture thread stopped");
-            }
-        });
-    }
+    sh.session_alive.store(true, Ordering::Release);
 
     // Bulk channel: clipboard/files + Hello exchange. The dialer adopts the
     // listener's arrangement, so you only configure the layout on one machine.
-    let hello = my_hello(&cfg.name, &sh, false);
+    let hello = my_hello(&cfg.name, sh, false);
     let sh_bulk = sh.clone();
-    std::thread::spawn(move || {
+    let bulk_thread = std::thread::spawn(move || {
         if let Err(e) = serve_bulk(conn, Some(hello), sh_bulk.clone(), true) {
             tracing::warn!(error = %e, "bulk channel closed");
         }
-        sh_bulk.session_alive.store(false, Ordering::Relaxed);
+        sh_bulk.session_alive.store(false, Ordering::Release);
     });
 
     // Encrypted UDP input channel; announce ourselves so the listener learns
@@ -863,9 +1002,10 @@ pub fn connect(server: Option<&str>) -> anyhow::Result<()> {
         echo_nanos: 0,
     })?;
 
-    let result = run_peer_input(&channel, &rx, &sh, &cfg.name, Some(server_addr));
-    if let Err(error) = &result {
-        status::disconnected(format!("Connection ended: {error}"));
-    }
+    let result = run_peer_input(&channel, rx, sh, &cfg.name, Some(server_addr));
+    // If UDP failed first, close TCP so the bulk reader and clipboard session
+    // cannot leak into the next reconnect attempt.
+    let _ = shutdown.shutdown(Shutdown::Both);
+    let _ = bulk_thread.join();
     result
 }
