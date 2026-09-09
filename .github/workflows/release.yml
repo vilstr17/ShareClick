@@ -1,0 +1,104 @@
+name: Release
+
+# Push a tag like v0.1.4-minimal to build the shareclick CLI binary for macOS
+# (universal) and Windows (x64), zip them, and attach them to a GitHub Release.
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  macos:
+    name: macOS binary (universal)
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin,x86_64-apple-darwin
+      - uses: Swatinem/rust-cache@v2
+      - name: Build universal binary
+        run: |
+          cargo build --release --target aarch64-apple-darwin
+          cargo build --release --target x86_64-apple-darwin
+          lipo -create \
+            -output shareclick \
+            target/aarch64-apple-darwin/release/shareclick \
+            target/x86_64-apple-darwin/release/shareclick
+      - name: Package
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          mkdir dist
+          zip "dist/shareclick-${VERSION}-macos-universal.zip" shareclick
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-binary
+          path: dist/*.zip
+
+  windows:
+    name: Windows binary (x64)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Build release binary
+        run: cargo build --release
+      - name: Package
+        shell: pwsh
+        run: |
+          $version = "${{ github.ref_name }}".TrimStart("v")
+          Compress-Archive -Path target\release\shareclick.exe `
+            -DestinationPath "dist\shareclick-$version-windows-x64.zip"
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-binary
+          path: dist/*.zip
+
+  release:
+    name: Publish GitHub Release
+    needs: [macos, windows]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      - name: Publish
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            artifacts/macos-binary/*.zip
+            artifacts/windows-binary/*.zip
+          generate_release_notes: true
+          prerelease: ${{ contains(github.ref_name, '-') }}
+          body: |
+            ## shareclick (minimal) ${{ github.ref_name }}
+
+            Mouse-only, one-way LAN control — a plain CLI binary, no config
+            file, no pairing UI.
+
+            **Download:** unzip for your platform —
+            * **macOS** (universal: Apple Silicon + Intel): `shareclick-*-macos-universal.zip`
+            * **Windows x64**: `shareclick-*-windows-x64.zip`
+
+            **Unsigned binary notes:**
+            * **macOS** "can't be opened / damaged": run `xattr -cr shareclick`
+              after unzipping (or right-click → Open).
+            * **Windows** SmartScreen: **More info → Run anyway**.
+
+            **Usage:** `shareclick recv` on the receiver, `shareclick send <receiver-ip>`
+            on the sender. Toggle control with **F12** (Windows/Linux) or by
+            **holding both Shift keys**. Both sides must share the same `--psk`.
+            Details in the README.
+
+            Building from source: `cargo build --release` (no Rust needed if you
+            use the zips above).
