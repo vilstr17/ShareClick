@@ -55,6 +55,7 @@ jobs:
         shell: pwsh
         run: |
           $version = "${{ github.ref_name }}".TrimStart("v")
+          New-Item -ItemType Directory -Force dist | Out-Null
           Compress-Archive -Path target\release\shareclick.exe `
             -DestinationPath "dist\shareclick-$version-windows-x64.zip"
       - name: Upload artifact
