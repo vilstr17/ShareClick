@@ -1,103 +1,55 @@
-<div align="center">
+# shareclick (minimal)
 
-<img src="https://raw.githubusercontent.com/phun333/ShareClick/main/site/og.png" alt="ShareClick — a low-latency, open-source software KVM for macOS and Windows" width="100%" />
+Control one computer's mouse from another over the LAN — nothing else.
 
-<h1>ShareClick</h1>
+One machine *sends* its physical mouse, the other *receives* and injects it as
+real input. Mouse-only, one-way, no config file, no pairing UI.
 
-**A low-latency, open-source software KVM.** Move one keyboard & mouse — plus the
-clipboard and files — between your **macOS** and **Windows** machines over the
-LAN, end-to-end encrypted, with the lowest input lag we can squeeze out.
-
-[![Download](https://img.shields.io/badge/Download-2563eb?style=for-the-badge)](https://github.com/phun333/ShareClick/releases)
-[![Docs](https://img.shields.io/badge/Docs-1d4ed8?style=for-the-badge)](https://shareclick.mintlify.app)
-[![Website](https://img.shields.io/badge/Website-60a5fa?style=for-the-badge)](https://phun333.github.io/ShareClick/)
-
-![License](https://img.shields.io/badge/license-MIT_%2F_Apache--2.0-green)
-![Platforms](https://img.shields.io/badge/platforms-macOS_%7C_Windows-lightgrey)
-![Latency](https://img.shields.io/badge/transport-~6µs_one--way-blueviolet)
-
-</div>
-
----
-
-> **Development status:** ShareClick is under active development and may not
-> work reliably on every macOS and Windows setup. If you try it, please
-> [report bugs](https://github.com/phun333/ShareClick/issues/new?template=bug_report.yml),
-> [suggest improvements](https://github.com/phun333/ShareClick/issues/new?template=feature_request.yml), or
-> [contribute a fix](./CONTRIBUTING.md).
-
-> **Personal fork:** This public repository is my version of ShareClick, based
-> on the original [phun333/ShareClick](https://github.com/phun333/ShareClick)
-> project. I was not able to successfully pair my devices, so pairing
-> reliability remains an open issue in this fork.
-
-A free **alternative to Synergy, ShareMouse, Barrier and Input Leap**, the
-Mac-capable answer to **Mouse Without Borders**, and effectively **Universal
-Control for Windows**.
-
-- **One keyboard & mouse** — push your cursor across the screen edge to control the other machine.
-- **Shared clipboard** — copy on one machine, paste on the other (text + images).
-- **Drag-and-drop files** — reliable, chunked transfer between machines.
-- **End-to-end encrypted** — X25519 + a shared passphrase + ChaCha20-Poly1305. LAN-only, no cloud, no accounts.
-- **Latency-first** — dedicated UDP input path, ~6 µs one-way transport overhead.
-
-## Install
-
-**macOS (Homebrew)**
-```bash
-brew install --cask phun333/tap/shareclick
+```
+cargo build --release
 ```
 
-**Windows (Scoop)**
-```powershell
-scoop install https://raw.githubusercontent.com/phun333/ShareClick/main/packaging/scoop/shareclick.json
+## Usage
+
+On the machine whose mouse you want to **use remotely** (the receiver):
+
+```sh
+./target/release/shareclick recv            # listens on UDP 24800
+./target/release/shareclick recv --port 9000 --psk my-secret
 ```
 
-Or grab the installer from the [**Releases**](https://github.com/phun333/ShareClick/releases) page.
+On the machine with the **physical mouse** (the sender):
 
-> **Note:** builds are **unsigned** (no paid Apple/Microsoft certificate), so your OS
-> shows a one-time warning. Follow the
-> [installation docs](https://shareclick.mintlify.app/installation) to review and
-> allow the app.
+```sh
+./target/release/shareclick send 192.168.1.20
+./target/release/shareclick send 192.168.1.20:9000 --psk my-secret
+```
 
-## Try ShareClick
+While connected, the sender's mouse still works locally until you toggle
+control:
 
-On **both** machines: open ShareClick (menu-bar on macOS, system tray on
-Windows) → **Settings & Monitor Manager** → set the **same passphrase** and your
-screen layout → save. Then push your mouse into the shared screen edge to jump
-across; copy/paste and files sync automatically.
+* **F12** toggles control (Windows/Linux)
+* **hold both Shift keys** toggles control (works everywhere — the escape hatch)
 
-**Full walkthrough in the [Quickstart](https://shareclick.mintlify.app/quickstart).**
+While control is on, all of the sender's input goes to the receiver and is
+swallowed locally.
 
-## How it compares
+Both sides must use the same `--psk` (default `shareclick`). Traffic is
+encrypted with X25519 + ChaCha20-Poly1305; with a mismatched PSK nothing gets
+through.
 
-| Tool | License | Mouse/KB | Clipboard | Files |
-|------|---------|:--------:|:---------:|:-----:|
-| ShareMouse | Paid | Yes | Yes | Yes |
-| Synergy | Paid | Yes | Yes | Yes |
-| Deskflow | GPLv2 | Yes | Yes | Partial |
-| Input Leap | GPLv2 | Yes | Yes | Partial |
-| Barrier | Open (archived) | Yes | Yes | No |
-| Lan Mouse | Open | Yes | No | No |
-| **ShareClick** | **MIT/Apache** | Yes | Yes | Yes |
+## Notes
 
-See the full [comparisons](https://shareclick.mintlify.app/compare/overview).
+* macOS: **both** machines need Accessibility permission for the terminal/app
+  (capture needs it on the sender, injection needs it on the receiver).
+* The stream is UDP with sequence numbers — dropped packets are skipped, not
+  queued, to keep latency low.
+* An idle sender sends a keep-alive every 500 ms; the receiver exits if the
+  sender is silent for 15 s.
 
-## Documentation
+## Why this branch exists
 
-Everything lives in the **[docs site](https://shareclick.mintlify.app)** —
-install, usage, configuration, troubleshooting, architecture, wire protocol,
-security model, and contributor guides.
-
-Building from source? See the [development guide](https://shareclick.mintlify.app/develop/development).
-The Mintlify source lives in [`mintlify/`](./mintlify/README.md).
-
-## Contributing
-
-PRs welcome! Read [CONTRIBUTING.md](./CONTRIBUTING.md) first — we use
-[Conventional Commits](https://www.conventionalcommits.org/), and a one-time
-`./scripts/setup-hooks.sh` installs git hooks that keep CI green.
-
-## License
-
-Dual-licensed under [**MIT**](./LICENSE-MIT) or [**Apache-2.0**](./LICENSE-APACHE) — your choice.
+This is the `minimal` branch: the full ShareClick (screen-edge hand-off,
+keyboard, clipboard, file transfer, mDNS pairing, tray/GUI, background
+service) stripped down to the smallest useful mouse-forwarding core. See
+`main` for the complete product.
